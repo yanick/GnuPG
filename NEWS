@@ -1,4 +1,9 @@
-Noteworthy changes in version 0.06 (2000-0-06)
+Noteworthy changes in version 0.07 (2000-08-15)
+
+	* Output to a file handle reference was broken.
+
+----------------------------------
+Noteworthy changes in version 0.06 (2000-08-06)
 ----------------------------------
 
 	* Local-user wasn't working. Thanks to Chris Andrews for

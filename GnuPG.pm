@@ -46,7 +46,7 @@ BEGIN {
 
     Exporter::export_ok_tags( qw( algo trust ) );
 
-    $VERSION = '0.06';
+    $VERSION = '0.07';
 }
 
 use constant DSA_ELGAMAL	=> 1;
@@ -253,7 +253,7 @@ sub run_gnupg($) {
 	if ( ref $self->{output} && defined fileno $self->{output} ) {
 	    open ( STDOUT, ">&" . fileno $self->{output} )
 	      or die "can't redirect stdout to proper output fd: $!\n";
-	    close fileno $self->{output};
+	    close $self->{output};
 	} elsif ( $self->{output} ) {
 	    open ( STDOUT, ">".$self->{output} )
 	      or die "can't open $self->{output} for output: $!\n";

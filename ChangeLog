@@ -1,3 +1,19 @@
+2000-08-15  Francis J. Lacoste  <francis.lacoste@iNsu.COM>
+
+	* Tag: GNUPG_0_07
+
+	* GnuPG.spec: Updated for version 0.07.
+
+	* NEWS: Updated for version 0.07.
+
+	* README: Updated for version 0.07.
+
+	* GnuPG.pm (VERSION): Updated version number to 0.07.
+	(run_gnupg): Close the fh ref not its file descriptor.
+
+	* test.pl: Added tests for encryption and decryption
+	to a file reference / pipe.
+
 2000-08-07  Francis J. Lacoste  <francis.lacoste@iNsu.COM>
 
 	* Tag: GNUPG_0_06

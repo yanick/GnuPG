@@ -77,6 +77,19 @@ sub encrypt_test {
 		 );
 }
 
+sub pipe_encrypt_test {
+    printf "%-40s", "Pipe Encrypt";
+    open CAT, "| cat > test/pipe-file.txt.gpg"
+      or die "can't fork: $!\n";
+    $gpg->encrypt(
+		  recipient => USERID,
+		  output    => \*CAT,
+		  armor	    => 1,
+		  plaintext => "test/file.txt",
+		 );
+    close CAT;
+}
+
 sub encrypt_sign_test {
     printf "%-40s", "Encrypt and Sign";
     $gpg->encrypt(
@@ -152,6 +165,17 @@ sub decrypt_test {
 		    ciphertext	=> "test/file.txt.gpg",
 		    passphrase  => PASSWD,
 		 );
+}
+sub pipe_decrypt_test {
+    printf "%-40s", "Pipe Decrypt";
+    open CAT, "cat test/file.txt.gpg|"
+      or die "can't fork: $!\n";
+    $gpg->decrypt(
+		    output	=> "test/file.txt.plain",
+		    ciphertext	=> \*CAT,
+		    passphrase  => PASSWD,
+		 );
+    close CAT;
 }
 
 sub decrypt_sign_test {
@@ -302,14 +326,14 @@ my @tests = qw(
                 gen_key_test
     		import_test	 import2_test		import3_test
     		export_test	 export2_test		export_secret_test
-    		encrypt_test	 encrypt_sign_test	encrypt_sym_test
+    		encrypt_test	 pipe_encrypt_test	pipe_decrypt_test
+		encrypt_sign_test encrypt_sym_test
     		encrypt_notrust_test
     		decrypt_test	 decrypt_sign_test	decrypt_sym_test
     		sign_test	 detachsign_test	clearsign_test
     		verify_sign_test verify_detachsign_test verify_clearsign_test
 		tie_encrypt_test tie_decrypt_test tie_decrypt_para_mode_test
     	        );
-
 print "1..", scalar @tests, "\n";
 my $i = 1;
 for ( @tests ) {
