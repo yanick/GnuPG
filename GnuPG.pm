@@ -3,9 +3,10 @@
 #
 #    This file is part of GnuPG.pm.
 #
-#    Author: Francis J. Lacoste <francis.lacoste@iNsu.COM>
+#    Author: Francis J. Lacoste <francis.lacoste@Contre.COM>
 #
 #    Copyright (C) 2000 iNsu Innovations Inc.
+#    Copyright (C) 2001 Francis J. Lacoste
 #
 #    This program is free software; you can redistribute it and/or modify
 #    it under the terms of the GNU General Public License as published by
@@ -46,7 +47,7 @@ BEGIN {
 
     Exporter::export_ok_tags( qw( algo trust ) );
 
-    $VERSION = '0.07';
+    $VERSION = '0.08';
 }
 
 use constant DSA_ELGAMAL	=> 1;
@@ -61,8 +62,8 @@ use constant TRUST_FULLY	=> 2;
 use constant TRUST_ULTIMATE	=> 3;
 
 use Carp;
+use POSIX qw();
 use Symbol;
-
 use Fcntl;
 
 sub parse_trust {
@@ -230,7 +231,6 @@ sub run_gnupg($) {
 	$self->{shm_lock_size}  = $lz;
     } else {
 	# Child
-	close $fd;
 	$self->{status_fd} = $wfd;
 
 	my $cmdline = $self->cmdline;
@@ -243,7 +243,6 @@ sub run_gnupg($) {
 	if ( ref $self->{input} && defined fileno $self->{input} ) {
 	    open ( STDIN, "<&" . fileno $self->{input} )
 	      or die "error setting up data input: $!\n";
-	    close $self->{input};
 	} elsif ( $self->{input} ) {
 	    open ( STDIN, $self->{input} )
 	      or die "error setting up data input: $!\n";
@@ -253,11 +252,23 @@ sub run_gnupg($) {
 	if ( ref $self->{output} && defined fileno $self->{output} ) {
 	    open ( STDOUT, ">&" . fileno $self->{output} )
 	      or die "can't redirect stdout to proper output fd: $!\n";
-	    close $self->{output};
 	} elsif ( $self->{output} ) {
 	    open ( STDOUT, ">".$self->{output} )
 	      or die "can't open $self->{output} for output: $!\n";
 	} # Defaults to stdout
+
+	# Close all open file descriptors except STDIN, STDOUT, STDERR
+	# and the status filedescriptor.
+	#
+	# This is needed for the tie interface which opens pipes which
+	# some ends must be closed in the child.
+	#
+	# Besides this is just plain good hygiene
+	my $max_fd = POSIX::sysconf( _SC_OPEN_MAX ) || 256;
+	foreach my $f ( 3 .. $max_fd ) {
+	    next if $f == fileno $self->{status_fd};
+	    POSIX::close( $f );
+	}
 
 	exec ( @$cmdline )
 	  or CORE::die "can't exec gnupg: $!\n";
@@ -317,6 +328,8 @@ sub send_passphrase($$) {
 
     # GnuPG should now tell us that it needs a passphrase
     my $cmd = $self->read_from_status;
+    # Skip UserID hint
+    $cmd = $self->read_from_status if ( $cmd =~ /USERID_HINT/ );
     $self->abort_gnupg( "Protocol error: expected NEED_PASSPHRASE.* got $cmd\n")
       unless $cmd =~ /NEED_PASSPHRASE/;
     $self->cpr_send( "passphrase.enter", $passwd );
@@ -519,7 +532,7 @@ sub encrypt($%) {
     push @$options, "--local-user", $args{"local-user"}
       if defined $args{"local-user"};
 
-    $self->{input}  = $args{plaintext};
+    $self->{input}  = $args{plaintext} || $args{input};
     $self->{output} = $args{output};
     if ( $args{symmetric} ) {
 	$self->command( "symmetric" );
@@ -545,7 +558,7 @@ sub encrypt($%) {
     # Assume the caller knows what he is doing.
     $self->cpr_maybe_send( "untrusted_key.override", 1 );
 
-    $self->end_gnupg;
+    $self->end_gnupg unless $args{tie_mode};
 }
 
 sub sign($%) {
@@ -558,7 +571,7 @@ sub sign($%) {
     push @$options, "--local-user", $args{"local-user"}
       if defined $args{"local-user"};
 
-    $self->{input}  = $args{plaintext};
+    $self->{input}  = $args{plaintext} || $args{input};
     $self->{output} = $args{output};
     if ( $args{clearsign} ) {
 	$self->command( "clearsign" );
@@ -574,8 +587,11 @@ sub sign($%) {
 
     # We need to unlock the private key
     $self->send_passphrase( $passphrase );
+    my ($cmd,$line) = $self->read_from_status;
+    $self->abort_gnupg( "invalid passphrase\n" )
+      unless $cmd =~ /GOOD_PASSPHRASE/;
 
-    $self->end_gnupg;
+    $self->end_gnupg unless $args{tie_mode};
 }
 
 sub clearsign($%) {
@@ -657,17 +673,24 @@ sub verify($%) {
 }
 
 sub decrypt($%) {
-    my ($self,%args) = @_;
+    my $self = shift;
+    my %args = @_;
 
-    my $passphrase  = $args{passphrase} || "";
-
-    $self->{input}  = $args{ciphertext};
+    $self->{input}  = $args{ciphertext} || $args{input};
     $self->{output} = $args{output};
     $self->command( "decrypt" );
     $self->options( [] );
     $self->args( [] );
 
     $self->run_gnupg;
+
+    $self->decrypt_postwrite( @_ ) unless $args{tie_mode};
+}
+
+sub decrypt_postwrite($%) {
+    my ($self,%args) = @_;
+
+    my $passphrase  = $args{passphrase} || "";
 
     my ( $cmd, $arg );
     unless ( $args{symmetric} ) {
@@ -685,19 +708,8 @@ sub decrypt($%) {
     if ( ! $args{symmetric} ) {
 	$self->abort_gnupg ( "protocol error: expected GOOD_PASSPHRASE got $cmd: \n" )
 	  unless $cmd =~ /GOOD_PASSPHRASE/;
-	($cmd,$arg) = $self->read_from_status;
 
-	# gnupg 1.0.2 adds this status message
-	( $cmd, $arg ) = $self->read_from_status()
-	  if $cmd =~ /BEGIN_DECRYPTION/;
-
-	if ( $cmd =~ /SIG_ID/ ) {
-	    $sig = $self->check_sig( $cmd, $arg );
-	    ( $cmd, $arg ) = $self->read_from_status;
-	}
-
-	$self->abort_gnupg( "protocol error: expected DECRYPTION_OKAY got $cmd: \n" )
-	  unless $cmd =~ /DECRYPTION_OKAY/;
+	$sig = $self->decrypt_postread() unless $args{tie_mode};
     } else {
 	# gnupg 1.0.2 adds this status message
 	( $cmd, $arg ) = $self->read_from_status()
@@ -707,7 +719,28 @@ sub decrypt($%) {
 	  unless $cmd =~ /DECRYPTION_OKAY/;
     }
 
-    $self->end_gnupg;
+    $self->end_gnupg() unless $args{tie_mode};
+
+    return $sig ? $sig : 1;
+}
+
+sub decrypt_postread($) {
+    my $self = shift;
+
+    # gnupg 1.0.2 adds this status message
+    my ( $cmd, $arg ) = $self->read_from_status;
+
+    ( $cmd, $arg ) = $self->read_from_status()
+      if $cmd =~ /BEGIN_DECRYPTION/;
+
+    my $sig = undef;
+    if ( $cmd =~ /SIG_ID/ ) {
+	$sig = $self->check_sig( $cmd, $arg );
+	( $cmd, $arg ) = $self->read_from_status;
+    }
+
+    $self->abort_gnupg( "protocol error: expected DECRYPTION_OKAY got $cmd: \n" )
+      unless $cmd =~ /DECRYPTION_OKAY/;
 
     return $sig ? $sig : 1;
 }
@@ -1126,11 +1159,12 @@ message.
 
 =head1 AUTHOR
 
-Francis J. Lacoste <francis.lacoste@iNsu.COM>
+Francis J. Lacoste <francis.lacoste@Contre.COM>
 
 =head1 COPYRIGHT
 
 Copyright (c) 1999,2000 iNsu Innovations. Inc.
+Copyright (c) 2001 Francis J. Lacoste
 
 This program is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by

@@ -4,9 +4,10 @@
 #
 #    This file is part of GnuPG.pm.
 #
-#    Author: Francis J. Lacoste <francis.lacoste@iNsu.COM>
+#    Author: Francis J. Lacoste <francis.lacoste@Contre.COM>
 #
 #    Copyright (C) 1999, 2000 iNsu Innovations Inc.
+#    Copyright (C) 2001 Francis J. Lacoste
 #
 #    This program is free software; you can redistribute it and/or modify
 #    it under the terms of the GNU General Public License as published by
@@ -34,11 +35,30 @@ BEGIN {
 };
 
 sub run_gnupg {
-    my $class = shift;
+    my $self = shift;
 
-    my $gnupg = new GnuPG( @_ );
-    $gnupg->decrypt( @_ );
+    $self->{last_sig} = undef;
+    $self->{args} = [ @_ ];
+    $self->{gnupg}->decrypt( @_ );
 };
+
+sub postread_hook {
+    my $self = shift;
+
+    $self->{gnupg}->decrypt_postread( @{$self->{args}} );
+}
+
+sub postwrite_hook {
+    my $self = shift;
+
+    $self->{last_sig} = $self->{gnupg}->decrypt_postwrite( @{$self->{args}} );
+}
+
+sub signature {
+    my $self = shift;
+
+    return $self->{last_sig};
+}
 
 1;
 

@@ -1,12 +1,12 @@
 #
-#    GnuPG/Tie/Encrypt.pm - Tied file handle interface to the encryption 
-#			    function of GnuPG.
+#    GnuPG/Tie/Sign.pm - Tied file handle interface to the sign
+#			 function of GnuPG.
 #
 #    This file is part of GnuPG.pm.
 #
 #    Author: Francis J. Lacoste <francis.lacoste@Contre.COM>
 #
-#    Copyright (C) 1999, 2000 iNsu Innovations Inc.
+#    Copyright (C) 2000 iNsu Innovations Inc.
 #    Copyright (C) 2001 Francis J. Lacoste
 #
 #    This program is free software; you can redistribute it and/or modify
@@ -23,7 +23,7 @@
 #    along with this program; if not, write to the Free Software
 #    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 #
-package GnuPG::Tie::Encrypt;
+package GnuPG::Tie::Sign;
 
 use GnuPG;
 use GnuPG::Tie;
@@ -35,9 +35,7 @@ BEGIN {
 };
 
 sub run_gnupg {
-    my $self = shift;
-
-    $self->{gnupg}->encrypt( @_ );
+    $self->{gnupg}->sign( @_ );
 };
 
 1;

@@ -1,3 +1,41 @@
+2001-05-21  Francis J. Lacoste  <francis.lacoste@Contre.COM>
+
+	* GnuPG.pm (sign): Check for invalid passphrase. (Thanks 
+	to Park Hays for reporting this).
+
+	* GnuPG/Tie/Sign.pm (run_gnupg): Updates for new tie 
+	implementation.
+
+	* GnuPG/Tie/Encrypt.pm (run_gnupg): Updates for new tie 
+	implementation.
+
+	* GnuPG/Tie/Decrypt.pm (run_gnupg,postread_hook,postwrite_hook): 
+	Updates for new tie implementation.
+	(signature) Returns the signature info of the decryption.
+	
+	* GnuPG/Tie/ClearSign.pm (run_gnupg): Updates for new tie 
+	implementation.
+
+	* GnuPG/Tie.pm: Removed fork. Tie interface doesn't use another
+	process anymore.
+
+	* test.pl: Made tests to run and tracing controllable via
+	environment variables.
+
+	* GnuPG.pm (send_passphrase): Added check for USERID_HINT from
+	gnupg 1.0.5
+	(run_gnupg): Close all file descriptors except stdin, stdout,
+	stderr and status fd.
+	(decrypt,decrypt_postread,decrypt_postwrite): Factored decrypt
+	process for tie interface.
+	(VERSION): Updated version number to 0.08
+
+	* GnuPG/Tie/Sign.pm: New Sign tie mode.
+
+	* GnuPG/Tie/ClearSign.pm: New ClearSign tie mode.
+
+	* GnuPG/Tie.pm (POD): Fix untie example in documentation.
+
 2000-08-15  Francis J. Lacoste  <francis.lacoste@iNsu.COM>
 
 	* Tag: GNUPG_0_07

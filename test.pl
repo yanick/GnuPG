@@ -19,12 +19,11 @@ use GnuPG;
 use GnuPG::Tie::Encrypt;
 use GnuPG::Tie::Decrypt;
 
-my $gpg = new GnuPG( homedir => "test", trace => 0 );
+my $gpg = new GnuPG( homedir => "test", trace => $ENV{TRACING} );
 
 sub gen_key_test {
     printf "%-40s", "Key generation";
     $gpg->gen_key(
-		  trace      => 1,
 		  passphrase => PASSWD,
 		  name	     => USERID,
 		 );
@@ -249,7 +248,7 @@ sub tie_encrypt_test {
     open( CIPHER_OUT, ">test/file-tie.txt.asc" )
       or die "error writing encrypting file\n";
     tie *CIPHER, 'GnuPG::Tie::Encrypt', homedir => "test",
-      recipient => 'GnuPG', armor => 1;
+      recipient => 'GnuPG', armor => 1, trace => $ENV{TRACING};
     while (<PLAINTEXT>) {
 	print CIPHER $_;
     }
@@ -273,7 +272,8 @@ sub tie_decrypt_test {
 
     open( CIPHER, "test/file-tie.txt.asc" )
       or die "error opening encrypted file\n";
-    tie *GNUPG, 'GnuPG::Tie::Decrypt', homedir => "test", passphrase => PASSWD;
+    tie *GNUPG, 'GnuPG::Tie::Decrypt', homedir => "test",
+      passphrase => PASSWD, trace => $ENV{TRACING};
 
     while ( <CIPHER> ) {
 	print GNUPG $_;
@@ -302,7 +302,8 @@ which continue on another line.
 This is the final paragraph.
 EOF
     tie *CIPHER, 'GnuPG::Tie::Encrypt', homedir => "test",
-      recipient => 'GnuPG', armor => 1;
+      recipient => 'GnuPG', armor => 1, trace => $ENV{TRACING};
+
     print CIPHER $plaintext;
     local $/ = undef;
     my $cipher = <CIPHER>;
@@ -334,6 +335,11 @@ my @tests = qw(
     		verify_sign_test verify_detachsign_test verify_clearsign_test
 		tie_encrypt_test tie_decrypt_test tie_decrypt_para_mode_test
     	        );
+
+if ( defined $ENV{TESTS} ) {
+    @tests = split /\s+/, $ENV{TESTS};
+}
+
 print "1..", scalar @tests, "\n";
 my $i = 1;
 for ( @tests ) {

@@ -3,9 +3,10 @@
 #
 #    This file is part of GnuPG.pm.
 #
-#    Author: Francis J. Lacoste <francis.lacoste@iNsu.COM>
+#    Author: Francis J. Lacoste <francis.lacoste@Contre.COM>
 #
 #    Copyright (C) 1999, 2000 iNsu Innovations Inc.
+#    Copyright (C) 2001 Francis J. Lacoste
 #
 #    This program is free software; you can redistribute it and/or modify
 #    it under the terms of the GNU General Public License as published by
@@ -36,15 +37,15 @@ sub TIEHANDLE {
     my $class = shift;
     $class = ref $class || $class;
 
-    my ($child_in, $child_out)	= ( gensym, gensym );
-    my ($parent_in,$parent_out) = ( gensym, gensym );
-    pipe $child_in, $parent_out
+    my ($gpg_in, $gpg_out)  = ( gensym, gensym );
+    my ($tie_in,$tie_out)   = ( gensym, gensym );
+    pipe $gpg_in, $tie_out
       or croak "error while creating pipe: $!";
-    pipe $parent_in, $child_out
+    pipe $tie_in, $gpg_out
       or croak "error while creating pipe: $!";
 
     # Unbuffer writer pipes
-    for my $fd ( ($child_out, $parent_out) ) {
+    for my $fd ( ($gpg_out, $tie_out) ) {
 	my $old = select $fd;
 	$| = 1;
 	select $old;
@@ -52,57 +53,41 @@ sub TIEHANDLE {
 
     # Keep pipes open after exec
     # Removed close on exec from all file descriptor
-    for my $fd ( ( $child_in, $child_out, $parent_in, $parent_out ) ) {
+    for my $fd ( ( $gpg_in, $gpg_out, $tie_in, $tie_out ) ) {
 	fcntl( $fd, F_SETFD, 0 )
 	  or croak "error removing close on exec flag: $!\n" ;
     }
 
-    my $child = fork;
-    croak "error in fork: $!" unless defined $child;
-    if ( $child ) {
-	# Those aren't use in the parent
-	close $child_in;
-	close $child_out;
+    # Operate in non blocking mode
+    for my $fd ( $tie_in, $tie_out ) {
+	my $flags = fcntl $fd, F_GETFL, 0
+	  or croak "error getting flags on pipe: $!\n";
+	fcntl $fd, F_SETFL, $flags | O_NONBLOCK
+	  or croak "error setting non-blocking IO on pipe: $!\n";
+    }
 
-	# Operate in non blocking mode
-	for my $fd ( $parent_in, $parent_out ) {
-	    my $flags = fcntl $fd, F_GETFL, 0
-	      or croak "error getting flags on pipe: $!\n";
-	    fcntl $fd, F_SETFL, $flags | O_NONBLOCK
-	      or croak "error setting non-blocking IO on pipe: $!\n";
-	}
-
-	return bless { reader	    => $parent_in,
-		       writer	    => $parent_out,
+    my $self = bless { reader	    => $tie_in,
+		       writer	    => $tie_out,
 		       done_writing => 0,
 		       buffer	    => "",
 		       len	    => 0,
 		       offset	    => 0,
-		       child	    => $child,
 		       line_buffer  => "",
 		       eof	    => 0,
+		       gnupg	    => new GnuPG( @_ ),
 		     }, $class;
-    } else {
-	# Those aren't use in the child
-	close $parent_in;
-	close $parent_out;
 
-	# Duplicate stdin and stdout to our pipe
-	open ( STDIN, "<&" . fileno $child_in )
-	  or croak "can't redirect stdin to pipe: $!\n";
-	open ( STDOUT, ">&" . fileno $child_out )
-	  or croak "can't redirect stdout to pipe: $!\n";
-	close $child_in;
-	close $child_out;
+    # Let subclass call the appropriate method and set
+    # up the GnuPG object.
+    $self->run_gnupg( @_,
+		      input	=> $gpg_in,
+		      output	=> $gpg_out,
+		      tie_mode	=> 1,
+		    );
+    close $gpg_in;
+    close $gpg_out;
 
-	# Let subclass call the appropriate method and set
-	# up the GnuPG object.
-	$class->run_gnupg( @_ );
-
-
-	# This is needed because mod_perl override this
-	CORE::exit( 0 );
-    }
+    return $self;
 }
 
 sub WRITE {
@@ -151,6 +136,8 @@ sub done_writing() {
 	$self->{done_writing} = 1;
 	close $self->{writer}
 	  or croak "error closing writer pipe: $\n";
+
+	$self->postwrite_hook();
     }
 }
 
@@ -236,7 +223,9 @@ sub CLOSE {
     close $self->{reader}
       or croak "error closing reader pipe: $!\n";
 
-    waitpid $self->{child}, 0;
+    $self->postread_hook();
+
+    $self->{gnupg}->end_gnupg();
 
     $self->{reader} = undef;
     $self->{writer} = undef;
@@ -318,6 +307,17 @@ sub getline {
 	}
     }
 }
+
+# Hook called after reading is done
+sub postread_hook {
+
+}
+
+# Hook called when writing is done.
+sub postwrite_hook {
+
+}
+
 1;
 
 __END__
@@ -342,7 +342,7 @@ EOF
     local $/ = undef;
     my $ciphertext = <CIPHER>;
     close CIPHER;
-    untie CIPHER;
+    untie *CIPHER;
 
     tie *PLAINTEXT, 'GnuPG::Tie::Decrypt', passphrase => 'secret';
     print PLAINTEXT $ciphertext;
@@ -350,7 +350,7 @@ EOF
 
     # $plaintext should now contains 'This is a secret'
     close PLAINTEXT;
-    untie PLAINTEXT
+    untie *PLAINTEXT
 
 =head1 DESCRIPTION
 
@@ -368,19 +368,14 @@ GnuPG object. You can use a mix of options to ouput directly to a file or
 to read directly from a file, only remember than once you start reading
 from the file handle you can't write to it anymore.
 
-
-=head1 IMPLEMENTATIONS DETAILS
-
-This interface will fork twice, once for the gnupg process and one the
-controls the gpg process.
-
 =head1 AUTHOR
 
-Francis J. Lacoste <francis.lacoste@iNsu.COM>
+Francis J. Lacoste <francis.lacoste@Contre.COM>
 
 =head1 COPYRIGHT
 
 Copyright (c) 1999, 2000 iNsu Innovations Inc.
+Copyright (c) 2001 Francis J. Lacoste
 
 This program is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by

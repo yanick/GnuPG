@@ -1,13 +1,13 @@
 GnuPG
 =====
 
-Version: 0.07
+Version: 0.08
 
 Requirements
 ------------
 
 perl
-gpg 1.0.0 or later. 
+gpg 1.0.0 or later. (Version 1.05 recommanded)
 SysV compatible shared memory.
 
 Description
@@ -56,17 +56,18 @@ available from the perl API.
 Bugs
 ----
 
-Send bug reports and suggestions to <bugs@iNsu.COM>
+Send bug reports and suggestions to <bugs@Contre.COM>
 
 Authors
 -------
 
-Francis J. Lacoste <francis.lacoste@iNsu.COM>
+Francis J. Lacoste <francis.lacoste@Contre.COM>
 
 Copyright
 ---------
 
 Copyright (c) 1999, 2000 iNsu Innovations Inc. 
+Copyright (c) 2001 Francis J. Lacoste
 All rights reserved.
 
 This program is free software; you can redistribute it and/or modify

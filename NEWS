@@ -1,4 +1,15 @@
+----------------------------------
+Noteworthy changes in version 0.08 (2001-05-21)
+----------------------------------
+
+	* Updated for gnupg 1.0.5
+	* Tie implementation doesn't add an extra fork. Only one 
+	fork for the gpg process is done.
+	* Added ClearSign and Sign tie interface.
+
+----------------------------------
 Noteworthy changes in version 0.07 (2000-08-15)
+----------------------------------
 
 	* Output to a file handle reference was broken.
 

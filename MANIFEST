@@ -6,6 +6,8 @@ GnuPG.pm
 GnuPG/Tie.pm
 GnuPG/Tie/Encrypt.pm
 GnuPG/Tie/Decrypt.pm
+GnuPG/Tie/ClearSign.pm
+GnuPG/Tie/Sign.pm
 GnuPG.spec
 MANIFEST
 README

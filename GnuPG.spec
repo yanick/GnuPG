@@ -1,12 +1,12 @@
 Summary: Perl interface to the Gnu Privacy Guard
 Name: GnuPG
-Version: 0.07
-Release: 1i
-Source: http://indev.insu.com/sources/%{name}-%{version}.tar.gz
+Version: 0.08
+Release: 1c
+Source: http://www.cpan.org/modules/by-module/GnuPG/%{name}-%{version}.tar.gz
 Copyright: GPL
 Group: Development/Languages
 Prefix: /usr
-URL: http://indev.insu.com/GnuPG/gnupg.html
+URL: http://www.cpan.org/modules/by-module/GnuPG/%{name}-%{version}.readme
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root
 BuildArchitectures: noarch
 Requires: gnupg >= 1.0
@@ -41,6 +41,10 @@ rm -fr $RPM_BUILD_ROOT
 %doc README ChangeLog NEWS
 
 %changelog
+* Mon May 21 2001  Francis J. Lacoste <francis.lacoste@Contre.COM> 
+  [0.08-1c]
+- Updated to version 0.08.
+
 * Tue Aug 15 2000  Francis J. Lacoste <francis.lacoste@iNsu.COM> 
   [0.07-1i]
 - Updated to version 0.07.
