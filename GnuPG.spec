@@ -1,13 +1,13 @@
 Summary: Perl interface to the Gnu Privacy Guard
 Name: GnuPG
-Version: 0.04
+Version: %(perl -I. -MGnuPG -e 'print $GnuPG::VERSION, "\n"')
 Release: 1i
 Source: http://indev.insu.com/sources/%{name}-%{version}.tar.gz
 Copyright: GPL
-Group: Development/Libraries/Perl
+Group: Applications/System
 Prefix: /usr
 URL: http://indev.insu.com/GnuPG/gnupg.html
-BuildRoot: /var/tmp/%{name}-%{version}-root
+BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root
 BuildArchitectures: noarch
 Provides: perl(GnuPG) = %{version}, perl(GnuPG::Tie::Encrypt) = %{version}
 Provides: perl(GnuPG::Tie::Decrypt) = %{version}, perl(GnuPG::Tie) = %{version}
@@ -28,7 +28,7 @@ find -type f -exec sh -c 'if head -c 100 $0 | grep -q "^#!.*perl"; then \
 %build
 perl Makefile.PL 
 make OPTIMIZE="$RPM_OPT_FLAGS"
-#make test
+make test
 
 %install
 rm -fr $RPM_BUILD_ROOT
@@ -51,9 +51,9 @@ find $RPM_BUILD_ROOT -type d -path '*/usr/lib/perl5/site_perl/5.005/*' \
     -not -path '*/auto' -not -path "*/*-linux" | \
     sed -e "s!$RPM_BUILD_ROOT!%dir !" > %{name}-file-list
     
-find $RPM_BUILD_ROOT -not -type d -not -name "perllocal.pod" | \
+find $RPM_BUILD_ROOT -type f -o -type l -not -name "perllocal.pod" | \
 	sed -e "s|$RPM_BUILD_ROOT||" \
-	    -e 's!\(.*/man/man|.*\.pod$\)!%doc \1!' >> %{name}-file-list
+	    -e 's!\(.*/man/man\|.*\.pod$\)!%doc \1!' >> %{name}-file-list
 
 %clean
 rm -fr $RPM_BUILD_ROOT
@@ -63,6 +63,10 @@ rm -fr $RPM_BUILD_ROOT
 %doc README ChangeLog NEWS
 
 %changelog
+* Wed Jun 21 2000  Francis J. Lacoste <francis.lacoste@iNsu.COM> 
+  [0.05-1i]
+- Updated to version 0.05.
+
 * Mon Dec 06 1999  Francis J. Lacoste <francis.lacoste@iNsu.COM> 
   [0.04-1i]
 - Updated to version 0.04.

@@ -1,7 +1,7 @@
 GnuPG
 =====
 
-Version: 0.04
+Version: 0.05
 
 Requirements
 ------------
@@ -56,12 +56,17 @@ available from the perl API.
 Bugs
 ----
 
-Send bug reports and suggestions to francis.lacoste@iNsu.COM.
+Send bug reports and suggestions to <bugs@iNsu.COM>
+
+Authors
+-------
+
+Francis J. Lacoste <francis.lacoste@iNsu.COM>
 
 Copyright
 ---------
 
-Copyright (c) 1999 Francis J. Lacoste and iNsu Innovations Inc . 
+Copyright (c) 1999 iNsu Innovations Inc. 
 All rights reserved.
 
 This program is free software; you can redistribute it and/or modify

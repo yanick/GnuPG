@@ -3,6 +3,8 @@
 
 #use Test;
 
+use strict;
+
 use constant USERID	=> "GnuPG Test";
 use constant PASSWD	=> "test";
 use constant UNTRUSTED	=> "Francis";
@@ -221,7 +223,7 @@ sub tie_encrypt_test {
       or die "error opening file: $!\n";
     open( CIPHER_OUT, ">test/file-tie.txt.asc" )
       or die "error writing encrypting file\n";
-    tie *CIPHER, 'GnuPG::Tie::Encrypt', homedir => "test", 
+    tie *CIPHER, 'GnuPG::Tie::Encrypt', homedir => "test",
       recipient => 'GnuPG', armor => 1;
     while (<PLAINTEXT>) {
 	print CIPHER $_;
@@ -261,6 +263,40 @@ sub tie_decrypt_test {
 
     die "plaintext doesn't match\n" unless $plaintext_orig eq $plaintext;
 }
+
+sub tie_decrypt_para_mode_test {
+    printf "%-40s", "Tied decrypt in paragraph mode";
+    my $plaintext = <<EOF;
+This is a paragraph.
+
+This is another paragraph
+which continue on another line.
+
+
+
+This is the final paragraph.
+EOF
+    tie *CIPHER, 'GnuPG::Tie::Encrypt', homedir => "test",
+      recipient => 'GnuPG', armor => 1;
+    print CIPHER $plaintext;
+    local $/ = undef;
+    my $cipher = <CIPHER>;
+    close CIPHER;
+    untie *CIPHER;
+
+    local $/ = "";
+    tie *TEST, 'GnuPG::Tie::Decrypt', homedir => "test", passphrase => PASSWD;
+    print TEST $cipher;
+
+    my @para = <TEST>;
+    close TEST;
+    untie *TEST;
+
+    my $count = @para;
+    die "paragraph count should be 3: $count\n" unless $count == 3;
+    die "plaintext doesn't match input\n" unless join( "", @para) eq $plaintext;
+}
+
 my @tests = qw(
                 gen_key_test
     		import_test	 import2_test		import3_test
@@ -270,7 +306,7 @@ my @tests = qw(
     		decrypt_test	 decrypt_sign_test	decrypt_sym_test
     		sign_test	 detachsign_test	clearsign_test
     		verify_sign_test verify_detachsign_test verify_clearsign_test
-		tie_encrypt_test tie_decrypt_test
+		tie_encrypt_test tie_decrypt_test tie_decrypt_para_mode_test
     	        );
 print "1..", scalar @tests, "\n";
 my $i = 1;

@@ -1,3 +1,10 @@
+Noteworthy changes in version 0.05 (2000-06-21)
+-----------------------------------
+
+	* Support for paragraph mode in tied interface. 
+	* Removed file descriptor leaks.
+	* Made CPR interface more robust.
+
 Noteworthy changes in version 0.04 (1999-12-06)
 -----------------------------------
 

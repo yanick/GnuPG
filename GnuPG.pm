@@ -1,4 +1,3 @@
-
 #
 #    GnuPG.pm - Interface to the GNU Privacy Guard.
 #
@@ -47,7 +46,7 @@ BEGIN {
 
     Exporter::export_ok_tags( qw( algo trust ) );
 
-    $VERSION = '0.04';
+    $VERSION = '0.05';
 }
 
 use constant DSA_ELGAMAL	=> 1;
@@ -122,6 +121,10 @@ sub cmdline($) {
 sub end_gnupg($) {
     my $self = shift;
 
+    print STDERR "GnuPG: closing status fd " . fileno ($self->{status_fd}) 
+      . "\n"
+	if $self->{trace};
+
     close $self->{status_fd}
       or croak "error while closing pipe: $!\n";
 
@@ -159,7 +162,6 @@ sub next_status($$$) {
 
 sub read_from_status($) {
     my $self = shift;
-
     # Check if a status was pushed back
     if ( $self->{next_status} ) {
 	my $status = $self->{next_status};
@@ -167,9 +169,10 @@ sub read_from_status($) {
 	return @$status;
     }
 
-    print STDERR "GnuPG: reading from status fd\n"
+    print STDERR "GnuPG: reading from status fd " . fileno ($self->{status_fd}) . "\n"
       if $self->{trace};
     my $fd = $self->{status_fd};
+    local $/ = "\n"; # Just to be sure
     my $line = <$fd>;
     unless ($line) {
 	print STDERR "GnuPG: got from status fd: EOF" if $self->{trace};
@@ -205,6 +208,8 @@ sub run_gnupg($) {
     croak( "error forking: $!" ) unless defined $pid;
     if ( $pid ) {
 	# Parent
+	close $wfd;
+
 	$self->{status_fd} = $fd;
 	$self->{gnupg_pid} = $pid;
 
@@ -225,6 +230,7 @@ sub run_gnupg($) {
 	$self->{shm_lock_size}  = $lz;
     } else {
 	# Child
+	close $fd;
 	$self->{status_fd} = $wfd;
 
 	my $cmdline = $self->cmdline;
@@ -237,6 +243,7 @@ sub run_gnupg($) {
 	if ( ref $self->{input} && defined fileno $self->{input} ) {
 	    open ( STDIN, "<&" . fileno $self->{input} )
 	      or die "error setting up data input: $!\n";
+	    close $self->{input};
 	} elsif ( $self->{input} ) {
 	    open ( STDIN, $self->{input} )
 	      or die "error setting up data input: $!\n";
@@ -246,16 +253,14 @@ sub run_gnupg($) {
 	if ( ref $self->{output} && defined fileno $self->{output} ) {
 	    open ( STDOUT, ">&" . fileno $self->{output} )
 	      or die "can't redirect stdout to proper output fd: $!\n";
+	    close fileno $self->{output};
 	} elsif ( $self->{output} ) {
 	    open ( STDOUT, ">".$self->{output} )
 	      or die "can't open $self->{output} for output: $!\n";
 	} # Defaults to stdout
 
-	exec ( @$cmdline );
-	# This is done that way because mod_perl override 
-	# exit
-	print STDERR "can't exec gnupg: $!\n";
-	CORE::exit(1);
+	exec ( @$cmdline )
+	  or CORE::die "can't exec gnupg: $!\n";
     }
 }
 

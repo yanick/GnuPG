@@ -1,3 +1,21 @@
+2000-06-21  Francis J. Lacoste  <francis.lacoste@iNsu.COM>
+
+
+	* Tag: GNUPG_0_05
+
+	* GnuPG/Tie.pm (TIEHANDLE): Removed file descriptor leaks.
+	(READLINE) Handle array context properly. 
+	(getlines) Support paragraph mode.
+	(CLOSE) Return true when process completes successfully.
+	
+	* test.pl: Added test for GnuPG::Tie paragraph mode.
+
+	* GnuPG.pm: (version) Updated to version 0.05
+	(run_gnupg) Removed file descriptor leaks. Use CORE::die
+	in case of errors.
+	(read_from_status) Make sure that we are using newlin as
+	INPUT_RECORD_SEPARATOR.
+
 1999-12-06  Francis J. Lacoste  <francis.lacoste@iNsu.COM>
 
 	* Tag: GNUPG_0_04
@@ -15,7 +33,7 @@
 			    of PATH in the error message.
 			    (run_gnupg): /dev/null wasn't open for
 			    writing. Use CORE::exit(1) so that the
-			    function still works undef mod_perl.
+			    function still works under mod_perl.
 
 1999-11-30  Francis J. Lacoste  <francis.lacoste@iNsu.COM>
 

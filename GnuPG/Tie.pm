@@ -45,8 +45,8 @@ sub TIEHANDLE {
 
     # Unbuffer writer pipes
     for my $fd ( ($child_out, $parent_out) ) {
-	my $old = select $fd; 
-	$| = 1; 
+	my $old = select $fd;
+	$| = 1;
 	select $old;
     }
 
@@ -87,18 +87,18 @@ sub TIEHANDLE {
 	close $parent_in;
 	close $parent_out;
 
-	# Redirect stdin and stdout to our pipe
+	# Duplicate stdin and stdout to our pipe
 	open ( STDIN, "<&" . fileno $child_in )
 	  or croak "can't redirect stdin to pipe: $!\n";
 	open ( STDOUT, ">&" . fileno $child_out )
 	  or croak "can't redirect stdout to pipe: $!\n";
+	close $child_in;
+	close $child_out;
 
 	# Let subclass call the appropriate method and set
 	# up the GnuPG object.
 	$class->run_gnupg( @_ );
 
-	close $child_in;
-	close $child_out;
 
 	# This is needed because mod_perl override this
 	CORE::exit( 0 );
@@ -225,6 +225,38 @@ sub GETC {
 }
 
 sub READLINE {
+    wantarray ? $_[0]->getlines() : $_[0]->getline();
+}
+
+sub CLOSE {
+    my $self = shift;
+
+    $self->done_writing;
+
+    close $self->{reader}
+      or croak "error closing reader pipe: $!\n";
+
+    waitpid $self->{child}, 0;
+
+    $self->{reader} = undef;
+    $self->{writer} = undef;
+
+    ! $?;
+}
+
+sub getlines {
+    my $self = shift;
+
+    my @lines = ();
+    my $line;
+    while ( defined( $line = $self->getline ) ) {
+	push @lines, $line;
+    }
+
+    @lines;
+}
+
+sub getline {
     my $self = shift;
 
     if ( $self->{eof} ) {
@@ -267,24 +299,25 @@ sub READLINE {
 	    }
 	}
     } else {
-	croak "FIXME: paragraph mode not implemented\n";
+	my $buf = $self->{line_buffer};
+	while ( not $self->{eof} ) {
+
+	    if ( $buf =~ m/(\r\n\r\n+|\n\n+)/s ) {
+		my ($para, $rest) = split /\r\n\r\n+|\n\n+/, $buf, 2;
+		$self->{line_buffer} = $rest;
+		return $para . $1;
+	    }
+
+	    # Read more data in our buffer
+	    my $n = $self->READ( $buf, 4096, length $buf );
+	    if ( $n == 0 ) {
+		# Set EOF
+		$self->{eof} = 1;
+		return length $buf == 0 ? undef : $buf ;
+	    }
+	}
     }
 }
-
-sub CLOSE {
-    my $self = shift;
-
-    $self->done_writing;
-
-    close $self->{reader}
-      or croak "error closing reader pipe: $!\n";
-
-    waitpid $self->{child}, 0;
-
-    $self->{reader} = undef;
-    $self->{writer} = undef;
-}
-
 1;
 
 __END__

@@ -132,6 +132,7 @@ if ($opt{encrypt}) {
 }
 
 __END__
+
 =pod
 
 =head1 NAME
