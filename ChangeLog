@@ -1,3 +1,54 @@
+1999-12-06  Francis J. Lacoste  <francis.lacoste@iNsu.COM>
+
+	* Tag: GNUPG_0_04
+
+	* NEWS:		    Added a news file.
+
+	* GnuPG/Tie.pm(new): Make sure that pipes aren't closed after an
+			    exec and that they are unbuffered. Also use
+			    CORE::Exit(0) instead of exit(0) so that the  
+			    things works under mod_perl.
+			    (version): Upgraded to version 0.04.
+
+	* GnuPG.pm (new):   Specifying gnupg_path wasn't working properly.
+			    When gpg isn't found in PATH print the content
+			    of PATH in the error message.
+			    (run_gnupg): /dev/null wasn't open for
+			    writing. Use CORE::exit(1) so that the
+			    function still works undef mod_perl.
+
+1999-11-30  Francis J. Lacoste  <francis.lacoste@iNsu.COM>
+
+	* GnuPG.pm (pod):   Inserted a line before a =over line. Added 
+			    reference to documentation on tied file handle
+			    operations. 
+			    (send_cpr): Removed undefined
+			    warning when expecting an optional command and
+			    receiving an EOF.
+			    (run_gnupg): Check for valid file descriptor
+			    when using file handle reference in input and
+			    output redirection.
+			    (version): Updated to version 0.03
+
+	* test.pl:	    Added tests for tied file handle operations.
+			    Changed output format of tests.
+
+	* GnuPG/Tie/Decrypt.pm: Added encryption on a tied filehandle.
+
+	* GnuPG/Tie/Encrypt.pm: Added decryption on a tied filehandle.
+
+	* GnuPG/Tie.pm:	    Added abstract implementation for tied
+			    filehandle operations on GnuPG.
+
+1999-09-22  Francis J. Lacoste  <francis.lacoste@iNsu.COM>
+
+	* GnuPG.pm:	    Unloop single line for to support
+			    perl 5.004. (Thanks to David E. Weekly)
+
+	* gpgmailtunl:	    Insert blank line between =pod and
+			    first header. This broke pod2man.
+			    (Thanks to David E. Weekly)
+	
 1999-09-08  Francis J. Lacoste  <francis.lacoste@iNsu.COM>
 
 	* TAG:		    GNUPG_0_02

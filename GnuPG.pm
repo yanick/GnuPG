@@ -1,3 +1,4 @@
+
 #
 #    GnuPG.pm - Interface to the GNU Privacy Guard.
 #
@@ -46,7 +47,7 @@ BEGIN {
 
     Exporter::export_ok_tags( qw( algo trust ) );
 
-    $VERSION = '0.02';
+    $VERSION = '0.04';
 }
 
 use constant DSA_ELGAMAL	=> 1;
@@ -63,10 +64,7 @@ use constant TRUST_ULTIMATE	=> 3;
 use Carp;
 use Symbol;
 
-use IO::Select;
-
 use Fcntl;
-
 
 sub parse_trust {
     for (shift) {
@@ -130,12 +128,12 @@ sub end_gnupg($) {
     waitpid $self->{gnupg_pid}, 0
       or croak "error while waiting for gpg: $!\n";
 
-    delete $self->{$_} for ( qw(protocol gnupg_pid
-				shmid shm_size shm_lock_size
-				command options args
-				status_fd input output
-				next_status
-			    ) );
+    for ( qw(protocol gnupg_pid shmid shm_size shm_lock_size
+	     command options args status_fd input output
+	     next_status ) )
+    {
+	delete $self->{$_};
+    }
 
 }
 
@@ -231,12 +229,12 @@ sub run_gnupg($) {
 
 	my $cmdline = $self->cmdline;
 	unless ( $self->{trace} ) {
-	    open (STDERR, "/dev/null" )
+	    open (STDERR, "> /dev/null" )
 	       or die "can't redirect stderr to /dev/null: $!\n";
 	}
 
-	# This is where we graquitb the data
-	if ( ref $self->{input} ) {
+	# This is where we grab the data
+	if ( ref $self->{input} && defined fileno $self->{input} ) {
 	    open ( STDIN, "<&" . fileno $self->{input} )
 	      or die "error setting up data input: $!\n";
 	} elsif ( $self->{input} ) {
@@ -245,7 +243,7 @@ sub run_gnupg($) {
 	} # Defaults to stdin
 
 	# This is where the output goes
-	if ( ref $self->{output} ) {
+	if ( ref $self->{output} && defined fileno $self->{output} ) {
 	    open ( STDOUT, ">&" . fileno $self->{output} )
 	      or die "can't redirect stdout to proper output fd: $!\n";
 	} elsif ( $self->{output} ) {
@@ -253,20 +251,23 @@ sub run_gnupg($) {
 	      or die "can't open $self->{output} for output: $!\n";
 	} # Defaults to stdout
 
-	exec ( @$cmdline )
-	  or die "can't exec gnupg: $!\n";
+	exec ( @$cmdline );
+	# This is done that way because mod_perl override 
+	# exit
+	print STDERR "can't exec gnupg: $!\n";
+	CORE::exit(1);
     }
 }
 
 sub cpr_maybe_send($$$) {
-    (shift)->cpr_send( @_, 1);
+    ($_[0])->cpr_send( @_[1, $#_], 1);
 }
 
 sub cpr_send($$$;$) {
     my ($self,$key,$value, $optional) = @_;
 
     my ( $cmd, $arg ) = $self->read_from_status;
-    unless ( $cmd =~ /^SHM_GET/) {
+    unless ( defined $cmd && $cmd =~ /^SHM_GET/) {
 	$self->abort_gnupg( "protocol error: expected SHM_GET_XXX got $cmd\n" )
 	  unless $optional;
 	$self->next_status( $cmd, $arg );
@@ -340,11 +341,11 @@ sub new($%) {
     }
     if ( $args{gnupg_path} ) {
 	croak ( "Invalid gpg path: $args{gnupg_path}\n")
-	  unless -x $args{gnupath_path};
+	  unless -x $args{gnupg_path};
 	$self->{gnupg_path} = $args{gnupg_path};
     } else {
 	my ($path) = grep { -x "$_/gpg" } split /:/, $ENV{PATH};
-	croak ( "Couldn't find gpg in PATH" )
+	croak ( "Couldn't find gpg in PATH ($ENV{PATH})\n" )
 	  unless $path;
 	$self->{gnupg_path} = "$path/gpg";
     }
@@ -738,11 +739,14 @@ argument using named parameters, and errors are returned by
 throwing an exception (using croak).  If you wan't to catch
 errors you will have to use eval.
 
+There is also a tied file handle interface which you may find more
+convenient for encryption and decryption. See GnuPG::Tie(3) for details.
+
 =head1 CONSTRUCTOR
 
 =head2 new ( [params] )
 
-You create a new GnuPG wrapper object by invoking its new method.  
+You create a new GnuPG wrapper object by invoking its new method.
 (How original !).  The module will try to finds the B<gpg> program
 in your path and will croak if it can't find it. Here are the
 parameters that it accepts :
@@ -783,6 +787,7 @@ keyboard while running this methods because it consumes a lot of
 entropy from the computer. Here are the parameters it accepts :
 
     Ex: $gpg->
+
 =over
 
 =item algo
@@ -818,7 +823,7 @@ Optional comment portion of the user id.
 
 The passphrase that will be used to encrypt the private key. Optional
 but strongly recommended.
- 
+
 =back
 
     Example: $gpg->gen_key( algo => DSA_ELGAMAL, size => 1024,
@@ -1115,6 +1120,6 @@ the Free Software Foundation; either version 2 of the License, or
 
 =head1 SEE ALSO
 
-gpg(1) gpgmailtunl(1)
+gpg(1) GnuPG::Tie(3)
 
 =cut

@@ -132,8 +132,8 @@ if ($opt{encrypt}) {
 }
 
 __END__
-
 =pod
+
 =head1 NAME
 
 gpgmailtunl - Encrypts an email message into the body of another email.

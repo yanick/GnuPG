@@ -1,0 +1,13 @@
+Noteworthy changes in version 0.04 (1999-12-06)
+-----------------------------------
+
+	* Small bugfixes related to running under mod_perl.
+
+
+Noteworthy changes in version 0.03 (1999-11-30)
+-----------------------------------
+
+	* New tied file handle interface for encryption and decryption. 
+
+	* Small bugfixes.
+

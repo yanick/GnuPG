@@ -1,7 +1,7 @@
 GnuPG
 =====
 
-Version: 0.02
+Version: 0.04
 
 Requirements
 ------------
@@ -22,6 +22,9 @@ used the coprocess interface  provided by gpg.
 
 The module tries it best to map the rather interactive interface
 of gpg to a more programmatic API.
+
+Also the modules now offers a tied file handle interface to encryption
+and decryption making a lot more easy to use.
 
 Installing
 ----------
