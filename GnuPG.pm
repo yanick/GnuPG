@@ -5,7 +5,7 @@
 #
 #    Author: Francis J. Lacoste <francis.lacoste@iNsu.COM>
 #
-#    Copyright (C) 1999 Francis J. Lacoste, iNsu Innovations
+#    Copyright (C) 2000 iNsu Innovations Inc.
 #
 #    This program is free software; you can redistribute it and/or modify
 #    it under the terms of the GNU General Public License as published by
@@ -46,7 +46,7 @@ BEGIN {
 
     Exporter::export_ok_tags( qw( algo trust ) );
 
-    $VERSION = '0.05';
+    $VERSION = '0.06';
 }
 
 use constant DSA_ELGAMAL	=> 1;
@@ -288,7 +288,7 @@ sub cpr_send($$$;$) {
     my $shmid		= $self->{shmid};
     my $shm_size	= $self->{shm_size};
 
-    my $offset;
+    my $offset = 0;
     shmread $shmid,$offset,0,2
       or $self->abort_gnupg( "shared memory error: $!\n" );
 
@@ -455,19 +455,18 @@ sub import_keys($%) {
   FILE:
     my $num_files = ref $args{keys} ? @{$args{keys}} : 1;
     my ($cmd,$arg);
-    for ( my $i=0; $i < $num_files; ++$i) {
-	# We will see one IMPORTED for each key that is imported
-	KEY:
-	  while ( 1 ) {
-	      ($cmd,$arg) = $self->read_from_status;
-	      last KEY unless $cmd =~ /IMPORTED/;
-	      $count++
-	  }
 
-	# We will see on IMPORT_RES for all files processed
-	$self->abort_gnupg ( "protocol error expected IMPORT_RES got $cmd\n" )
-	  unless $cmd =~ /IMPORT_RES/;
+    # We will see one IMPORTED for each key that is imported
+  KEY:
+    while ( 1 ) {
+	($cmd,$arg) = $self->read_from_status;
+	last KEY unless $cmd =~ /IMPORTED/;
+	$count++
     }
+
+    # We will see one IMPORT_RES for all files processed
+    $self->abort_gnupg ( "protocol error expected IMPORT_RES got $cmd\n" )
+      unless $cmd =~ /IMPORT_RES/;
     $self->end_gnupg;
 
     # We return the number of imported keys
@@ -517,7 +516,8 @@ sub encrypt($%) {
     my $passphrase  = $args{passphrase} || "";
 
     push @$options, "--armor"	    if $args{armor};
-    push @$options, "--local-user"  if $args{"local-user"};
+    push @$options, "--local-user", $args{"local-user"}
+      if defined $args{"local-user"};
 
     $self->{input}  = $args{plaintext};
     $self->{output} = $args{output};
@@ -555,7 +555,8 @@ sub sign($%) {
     my $passphrase  = $args{passphrase} || "";
 
     push @$options, "--armor"	    if $args{armor};
-    push @$options, "--local-user"   if $args{"local-user"};
+    push @$options, "--local-user", $args{"local-user"}
+      if defined $args{"local-user"};
 
     $self->{input}  = $args{plaintext};
     $self->{output} = $args{output};
@@ -589,6 +590,10 @@ sub check_sig($;$$) {
     # Our caller may already have grabbed the first line of
     # signature reporting.
     ($cmd,$arg) = $self->read_from_status unless ( $cmd );
+
+    # Ignore patent warnings.
+    ( $cmd, $arg ) = $self->read_from_status()
+      if ( $cmd =~ /RSA_OR_IDEA/ );
 
     $self->abort_gnupg( "invalid signature from ", $arg =~ /[^ ](.+)/, "\n" )
       if ( $cmd =~ /BADSIG/);
@@ -677,18 +682,27 @@ sub decrypt($%) {
     $self->abort_gnupg ( "invalid passphrase\n" )
       if $cmd =~ /BAD_PASSPHRASE/;
     my $sig = undef;
-    if ( not $args{symmetric} ) {
+    if ( ! $args{symmetric} ) {
 	$self->abort_gnupg ( "protocol error: expected GOOD_PASSPHRASE got $cmd: \n" )
 	  unless $cmd =~ /GOOD_PASSPHRASE/;
 	($cmd,$arg) = $self->read_from_status;
+
+	# gnupg 1.0.2 adds this status message
+	( $cmd, $arg ) = $self->read_from_status()
+	  if $cmd =~ /BEGIN_DECRYPTION/;
 
 	if ( $cmd =~ /SIG_ID/ ) {
 	    $sig = $self->check_sig( $cmd, $arg );
 	    ( $cmd, $arg ) = $self->read_from_status;
 	}
+
 	$self->abort_gnupg( "protocol error: expected DECRYPTION_OKAY got $cmd: \n" )
 	  unless $cmd =~ /DECRYPTION_OKAY/;
     } else {
+	# gnupg 1.0.2 adds this status message
+	( $cmd, $arg ) = $self->read_from_status()
+	  if $cmd =~ /BEGIN_DECRYPTION/;
+
 	$self->abort_gnupg( "invalid passphrase" )
 	  unless $cmd =~ /DECRYPTION_OKAY/;
     }
@@ -1116,7 +1130,7 @@ Francis J. Lacoste <francis.lacoste@iNsu.COM>
 
 =head1 COPYRIGHT
 
-Copyright (c) 1999 Francis J. Lacoste and iNsu Innovations. inc.
+Copyright (c) 1999,2000 iNsu Innovations. Inc.
 
 This program is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by

@@ -1,3 +1,11 @@
+Noteworthy changes in version 0.06 (2000-0-06)
+----------------------------------
+
+	* Local-user wasn't working. Thanks to Chris Andrews for
+	  reporting and fixing this.
+	* Compatible with gpg 1.02.
+	* Ignore warning about RSA or IDEA algorithms.
+
 Noteworthy changes in version 0.05 (2000-06-21)
 -----------------------------------
 

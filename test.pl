@@ -24,6 +24,7 @@ my $gpg = new GnuPG( homedir => "test", trace => 0 );
 sub gen_key_test {
     printf "%-40s", "Key generation";
     $gpg->gen_key(
+		  trace      => 1,
 		  passphrase => PASSWD,
 		  name	     => USERID,
 		 );
@@ -154,7 +155,7 @@ sub decrypt_test {
 }
 
 sub decrypt_sign_test {
-    printf "%-40s", "Clear Sign a File";
+    printf "%-40s", "Decrypt a Signed File";
     $gpg->decrypt(
 		    output	=> "test/file.txt.plain2",
 		    ciphertext	=> "test/file.txt.sgpg",
@@ -308,6 +309,7 @@ my @tests = qw(
     		verify_sign_test verify_detachsign_test verify_clearsign_test
 		tie_encrypt_test tie_decrypt_test tie_decrypt_para_mode_test
     	        );
+
 print "1..", scalar @tests, "\n";
 my $i = 1;
 for ( @tests ) {

@@ -1,7 +1,7 @@
 GnuPG
 =====
 
-Version: 0.05
+Version: 0.06
 
 Requirements
 ------------
@@ -66,7 +66,7 @@ Francis J. Lacoste <francis.lacoste@iNsu.COM>
 Copyright
 ---------
 
-Copyright (c) 1999 iNsu Innovations Inc. 
+Copyright (c) 1999, 2000 iNsu Innovations Inc. 
 All rights reserved.
 
 This program is free software; you can redistribute it and/or modify

@@ -5,7 +5,7 @@
 #
 #    Author: Francis J. Lacoste <francis.lacoste@iNsu.COM>
 #
-#    Copyright (C) 1999 Francis J. Lacoste, iNsu Innovations
+#    Copyright (C) 1999, 2000 iNsu Innovations Inc.
 #
 #    This program is free software; you can redistribute it and/or modify
 #    it under the terms of the GNU General Public License as published by
@@ -380,7 +380,7 @@ Francis J. Lacoste <francis.lacoste@iNsu.COM>
 
 =head1 COPYRIGHT
 
-Copyright (c) 1999 Francis J. Lacoste and iNsu Innovations. inc.
+Copyright (c) 1999, 2000 iNsu Innovations Inc.
 
 This program is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by

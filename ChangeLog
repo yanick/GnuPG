@@ -1,3 +1,35 @@
+2000-08-07  Francis J. Lacoste  <francis.lacoste@iNsu.COM>
+
+	* Tag: GNUPG_0_06
+
+	* GnuPG.spec: Updated spec file to use new macros.
+
+	* GnuPG.pm (encrypt): Local user option wasn't working. (Thanks to
+	Chris Andrews for the fix)
+	(sign): Local user option wasn't working.
+	(version):  Version number is now 0.06
+
+2000-07-31  Francis J. Lacoste  <francis.lacoste@iNsu.COM>
+
+	* test.pl: Fixes description for decrypt_sign_test.
+
+	* GnuPG.pm: Updated copyrigh notice.
+	(check_sig): Ignore patent warnings. Thanks goes to 
+	Nuutti Kotivuori <nuutti.kotivuori@sonera.com> for spotting
+	that bug.
+	(decrypt): Fixes for gnupg 1.02 protocol changes.
+	(import_keys): Fixes for gnupg 1.02 protocol changes.
+
+	* README: Updated copyrigh notice.
+
+	* gpgmailtunl: Updated copyrigh notice.
+
+	* GnuPG/Tie.pm: Updated copyrigh notice.
+
+	* GnuPG/Tie/Decrypt.pm: Updated copyrigh notice.
+
+	* GnuPG/Tie/Encrypt.pm: Updated copyrigh notice.
+
 2000-06-21  Francis J. Lacoste  <francis.lacoste@iNsu.COM>
 
 
