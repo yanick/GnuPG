@@ -1,4 +1,10 @@
 ----------------------------------
+Noteworthy changes in version 0.09 (2001-06-08)
+----------------------------------
+
+	* Fix  POSIX::_SC_OPEN_MAX problem under use strict.
+
+----------------------------------
 Noteworthy changes in version 0.08 (2001-05-21)
 ----------------------------------
 

@@ -47,7 +47,7 @@ BEGIN {
 
     Exporter::export_ok_tags( qw( algo trust ) );
 
-    $VERSION = '0.08';
+    $VERSION = '0.09';
 }
 
 use constant DSA_ELGAMAL	=> 1;
@@ -264,7 +264,7 @@ sub run_gnupg($) {
 	# some ends must be closed in the child.
 	#
 	# Besides this is just plain good hygiene
-	my $max_fd = POSIX::sysconf( _SC_OPEN_MAX ) || 256;
+	my $max_fd = POSIX::sysconf( POSIX::_SC_OPEN_MAX ) || 256;
 	foreach my $f ( 3 .. $max_fd ) {
 	    next if $f == fileno $self->{status_fd};
 	    POSIX::close( $f );
