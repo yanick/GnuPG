@@ -1,0 +1,12 @@
+COPYING
+ChangeLog
+gpgmailtunl
+GnuPG.pm
+GnuPG.spec
+MANIFEST
+README
+Makefile.PL
+test.pl
+test/key1.pub
+test/key2.pub
+test/file.txt

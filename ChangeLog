@@ -1,0 +1,20 @@
+1999-09-08  Francis J. Lacoste  <francis.lacoste@iNsu.COM>
+
+	* TAG:		    GNUPG_0_02
+	
+	* GnuPG.pm:	    Removed colons from tag names.
+
+	* GnuPG.pm(run_gnupg): Handled input and output from
+			    file handle correctly.
+
+	* GnuPG.pm(abort_gnupg): Aborting now correctly throws
+			    the error message.
+			
+
+	* gpgmailtunl:	    Added as sample program.
+
+1999-09-05  Francis J. Lacoste  <francis.lacoste@iNsu.COM>
+
+	* GnuPG.pm:  Release 0.01.
+
+
