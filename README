@@ -1,7 +1,7 @@
 GnuPG
 =====
 
-Version: 0.09
+Version: 0.9
 
 Requirements
 ------------
@@ -15,7 +15,7 @@ Description
 
 GnuPG is a perl module that interface with the Gnu Privacy Guard using
 the coprocess hooks provided by gpg. The communication mechanism uses
-is shared memory and a status file descriptor. 
+is shared memory and a status file descriptor.
 
 There are others perl interface to PGP and GnuPG but none of them
 used the coprocess interface  provided by gpg.
@@ -45,7 +45,7 @@ Limitations
 -----------
 
 This module doesn't yet provides an interface to the key manipulation
-facilities of gpg. 
+facilities of gpg.
 
 It doesn't also provides the memory protection offered by gpg when
 manipulating user passphrase.
@@ -66,7 +66,7 @@ Francis J. Lacoste <francis.lacoste@Contre.COM>
 Copyright
 ---------
 
-Copyright (c) 1999, 2000 iNsu Innovations Inc. 
+Copyright (c) 1999, 2000 iNsu Innovations Inc.
 Copyright (c) 2001 Francis J. Lacoste
 All rights reserved.
 

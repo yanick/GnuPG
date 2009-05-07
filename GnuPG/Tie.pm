@@ -336,7 +336,7 @@ GnuPG::Tie::Decrypt - Tied filehandle interface to decryption with the GNU Priva
     use GnuPG::Tie::Decrypt;
 
     tie *CIPHER, 'GnuPG::Tie::Encrypt', armor => 1, recipient => 'User';
-    print CIPHER <<EOF
+    print CIPHER <<EOF;
 This is a secret
 EOF
     local $/ = undef;
@@ -350,7 +350,7 @@ EOF
 
     # $plaintext should now contains 'This is a secret'
     close PLAINTEXT;
-    untie *PLAINTEXT
+    untie *PLAINTEXT;
 
 =head1 DESCRIPTION
 

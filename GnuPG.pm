@@ -37,29 +37,29 @@ BEGIN {
     @EXPORT = qw();
 
     %EXPORT_TAGS = (
-		    algo   => [ qw(	DSA_ELGAMAL DSA ELGAMAL_ENCRYPT
-					ELGAMAL
-				    ) ],
-		    trust  => [ qw(	TRUST_UNDEFINED	TRUST_NEVER
-					TRUST_MARGINAL	TRUST_FULLY
-					TRUST_ULTIMATE ) ],
-		   );
+            algo   => [ qw(    DSA_ELGAMAL DSA ELGAMAL_ENCRYPT
+                    ELGAMAL
+                    ) ],
+            trust  => [ qw(    TRUST_UNDEFINED    TRUST_NEVER
+                    TRUST_MARGINAL    TRUST_FULLY
+                    TRUST_ULTIMATE ) ],
+           );
 
     Exporter::export_ok_tags( qw( algo trust ) );
 
-    $VERSION = '0.09';
+    $VERSION = '0.10';
 }
 
-use constant DSA_ELGAMAL	=> 1;
-use constant DSA		=> 2;
-use constant ELGAMAL_ENCRYPT	=> 3;
-use constant ELGAMAL		=> 4;
+use constant DSA_ELGAMAL    => 1;
+use constant DSA        => 2;
+use constant ELGAMAL_ENCRYPT    => 3;
+use constant ELGAMAL        => 4;
 
-use constant TRUST_UNDEFINED	=> -1;
-use constant TRUST_NEVER	=> 0;
-use constant TRUST_MARGINAL	=> 1;
-use constant TRUST_FULLY	=> 2;
-use constant TRUST_ULTIMATE	=> 3;
+use constant TRUST_UNDEFINED    => -1;
+use constant TRUST_NEVER    => 0;
+use constant TRUST_MARGINAL    => 1;
+use constant TRUST_FULLY    => 2;
+use constant TRUST_ULTIMATE    => 3;
 
 use Carp;
 use POSIX qw();
@@ -68,12 +68,12 @@ use Fcntl;
 
 sub parse_trust {
     for (shift) {
-	/ULTIMATE/  && do { return TRUST_ULTIMATE;  };
-	/FULLY/	    && do { return TRUST_FULLY;	    };
-	/MARGINAL/  && do { return TRUST_MARGINAL;  };
-	/NEVER/	    && do { return TRUST_NEVER;	    };
-	# Default
-	return TRUST_UNDEFINED;
+    /ULTIMATE/  && do { return TRUST_ULTIMATE;  };
+    /FULLY/        && do { return TRUST_FULLY;        };
+    /MARGINAL/  && do { return TRUST_MARGINAL;  };
+    /NEVER/        && do { return TRUST_NEVER;        };
+    # Default
+    return TRUST_UNDEFINED;
     }
 }
 
@@ -102,7 +102,7 @@ sub cmdline($) {
     # Default options
     push @$args, "--no-tty" unless $self->{trace};
     push @$args, "--no-greeting", "--status-fd", fileno $self->{status_fd},
-		 "--run-as-shm-coprocess", "0";
+         "--run-as-shm-coprocess", "0";
 
     # Check for homedir and options file
     push @$args, "--homedir", $self->{homedir} if $self->{homedir};
@@ -122,9 +122,9 @@ sub cmdline($) {
 sub end_gnupg($) {
     my $self = shift;
 
-    print STDERR "GnuPG: closing status fd " . fileno ($self->{status_fd}) 
+    print STDERR "GnuPG: closing status fd " . fileno ($self->{status_fd})
       . "\n"
-	if $self->{trace};
+    if $self->{trace};
 
     close $self->{status_fd}
       or croak "error while closing pipe: $!\n";
@@ -133,10 +133,10 @@ sub end_gnupg($) {
       or croak "error while waiting for gpg: $!\n";
 
     for ( qw(protocol gnupg_pid shmid shm_size shm_lock_size
-	     command options args status_fd input output
-	     next_status ) )
+         command options args status_fd input output
+         next_status ) )
     {
-	delete $self->{$_};
+    delete $self->{$_};
     }
 
 }
@@ -146,12 +146,12 @@ sub abort_gnupg($$) {
 
     # Signal our child that it is the end
     if ($self->{gnupg_pid} && kill 0 => $self->{gnupg_pid} ) {
-	kill INT => $self->{gnupg_pid};
+        kill INT => $self->{gnupg_pid};
     }
 
     $self->end_gnupg;
 
-    croak ( $msg );
+    confess ( $msg );
 }
 
 # Used to push back status information
@@ -165,26 +165,25 @@ sub read_from_status($) {
     my $self = shift;
     # Check if a status was pushed back
     if ( $self->{next_status} ) {
-	my $status = $self->{next_status};
-	$self->{next_status} = undef;
-	return @$status;
+        my $status = $self->{next_status};
+        $self->{next_status} = undef;
+        return @$status;
     }
 
-    print STDERR "GnuPG: reading from status fd " . fileno ($self->{status_fd}) . "\n"
-      if $self->{trace};
+    print STDERR "GnuPG: reading from status fd " . fileno ($self->{status_fd}) . "\n" if $self->{trace};
+
     my $fd = $self->{status_fd};
     local $/ = "\n"; # Just to be sure
     my $line = <$fd>;
     unless ($line) {
-	print STDERR "GnuPG: got from status fd: EOF" if $self->{trace};
-	return ();
+        print STDERR "GnuPG: got from status fd: EOF" if $self->{trace};
+        return ();
     }
-    print STDERR "GnuPG: got from status fd: $line"
-      if $self->{trace};
+
+    print STDERR "GnuPG: got from status fd: $line" if $self->{trace};
 
     my ( $cmd,$arg ) = $line =~ /\[GNUPG:\] (\w+) ?(.+)?$/;
-    $self->abort_gnupg( "error communicating with gnupg: bad status line: $line\n" )
-      unless $cmd;
+    $self->abort_gnupg( "error communicating with gnupg: bad status line: $line\n" ) unless $cmd;
     return wantarray ? ( $cmd, $arg ) : $cmd;
 }
 
@@ -201,77 +200,77 @@ sub run_gnupg($) {
 
     # Keep pipe open after close
     fcntl( $fd, F_SETFD, 0 )
-	or croak "error removing close on exec flag: $!\n" ;
+    or croak "error removing close on exec flag: $!\n" ;
     fcntl( $wfd, F_SETFD, 0 )
-	or croak "error removing close on exec flag: $!\n" ;
+    or croak "error removing close on exec flag: $!\n" ;
 
     my $pid = fork;
     croak( "error forking: $!" ) unless defined $pid;
     if ( $pid ) {
-	# Parent
-	close $wfd;
+    # Parent
+    close $wfd;
 
-	$self->{status_fd} = $fd;
-	$self->{gnupg_pid} = $pid;
+    $self->{status_fd} = $fd;
+    $self->{gnupg_pid} = $pid;
 
-	my ($cmd, $arg ) = $self->read_from_status;
+    my ($cmd, $arg ) = $self->read_from_status;
 
-	$self->abort_gnupg( "wrong response from gnupg (expected SHM_INFO): $cmd\n")
-	  unless ( $cmd eq "SHM_INFO" );
+    $self->abort_gnupg( "wrong response from gnupg (expected SHM_INFO): $cmd\n")
+      unless ( $cmd eq "SHM_INFO" );
 
-	my ( $proto, $gpid, $shmid, $sz, $lz ) =
-	  $arg =~ /pv=(\d+) pid=(\d+) shmid=(\d+) sz=(\d+) lz=(\d+)/;
+    my ( $proto, $gpid, $shmid, $sz, $lz ) =
+      $arg =~ /pv=(\d+) pid=(\d+) shmid=(\d+) sz=(\d+) lz=(\d+)/;
 
-	$self->abort_gnupg( "unsupported protocol version: $proto\n" )
-	  unless $proto == 1;
+    $self->abort_gnupg( "unsupported protocol version: $proto\n" )
+      unless $proto == 1;
 
-	$self->{protocol}		= $proto;
-	$self->{shmid}			= $shmid;
-	$self->{shm_size}		= $sz;
-	$self->{shm_lock_size}  = $lz;
+    $self->{protocol}        = $proto;
+    $self->{shmid}            = $shmid;
+    $self->{shm_size}        = $sz;
+    $self->{shm_lock_size}  = $lz;
     } else {
-	# Child
-	$self->{status_fd} = $wfd;
+    # Child
+    $self->{status_fd} = $wfd;
 
-	my $cmdline = $self->cmdline;
-	unless ( $self->{trace} ) {
-	    open (STDERR, "> /dev/null" )
-	       or die "can't redirect stderr to /dev/null: $!\n";
-	}
+    my $cmdline = $self->cmdline;
+    unless ( $self->{trace} ) {
+        open (STDERR, "> /dev/null" )
+           or die "can't redirect stderr to /dev/null: $!\n";
+    }
 
-	# This is where we grab the data
-	if ( ref $self->{input} && defined fileno $self->{input} ) {
-	    open ( STDIN, "<&" . fileno $self->{input} )
-	      or die "error setting up data input: $!\n";
-	} elsif ( $self->{input} ) {
-	    open ( STDIN, $self->{input} )
-	      or die "error setting up data input: $!\n";
-	} # Defaults to stdin
+    # This is where we grab the data
+    if ( ref $self->{input} && defined fileno $self->{input} ) {
+        open ( STDIN, "<&" . fileno $self->{input} )
+          or die "error setting up data input: $!\n";
+    } elsif ( $self->{input} ) {
+        open ( STDIN, $self->{input} )
+          or die "error setting up data input: $!\n";
+    } # Defaults to stdin
 
-	# This is where the output goes
-	if ( ref $self->{output} && defined fileno $self->{output} ) {
-	    open ( STDOUT, ">&" . fileno $self->{output} )
-	      or die "can't redirect stdout to proper output fd: $!\n";
-	} elsif ( $self->{output} ) {
-	    open ( STDOUT, ">".$self->{output} )
-	      or die "can't open $self->{output} for output: $!\n";
-	} # Defaults to stdout
+    # This is where the output goes
+    if ( ref $self->{output} && defined fileno $self->{output} ) {
+        open ( STDOUT, ">&" . fileno $self->{output} )
+          or die "can't redirect stdout to proper output fd: $!\n";
+    } elsif ( $self->{output} ) {
+        open ( STDOUT, ">".$self->{output} )
+          or die "can't open $self->{output} for output: $!\n";
+    } # Defaults to stdout
 
-	# Close all open file descriptors except STDIN, STDOUT, STDERR
-	# and the status filedescriptor.
-	#
-	# This is needed for the tie interface which opens pipes which
-	# some ends must be closed in the child.
-	#
-	# Besides this is just plain good hygiene
-	my $max_fd = POSIX::sysconf( POSIX::_SC_OPEN_MAX ) || 256;
-	foreach my $f ( 3 .. $max_fd ) {
-	    next if $f == fileno $self->{status_fd};
-	    POSIX::close( $f );
-	}
+    # Close all open file descriptors except STDIN, STDOUT, STDERR
+    # and the status filedescriptor.
+    #
+    # This is needed for the tie interface which opens pipes which
+    # some ends must be closed in the child.
+    #
+    # Besides this is just plain good hygiene
+    my $max_fd = POSIX::sysconf( &POSIX::_SC_OPEN_MAX ) || 256;
+    foreach my $f ( 3 .. $max_fd ) {
+        next if $f == fileno $self->{status_fd};
+        POSIX::close( $f );
+    }
 
-	exec ( @$cmdline )
-	  or CORE::die "can't exec gnupg: $!\n";
+    exec ( @$cmdline )
+      or CORE::die "can't exec gnupg: $!\n";
     }
 }
 
@@ -284,20 +283,20 @@ sub cpr_send($$$;$) {
 
     my ( $cmd, $arg ) = $self->read_from_status;
     unless ( defined $cmd && $cmd =~ /^SHM_GET/) {
-	$self->abort_gnupg( "protocol error: expected SHM_GET_XXX got $cmd\n" )
-	  unless $optional;
-	$self->next_status( $cmd, $arg );
-	return;
+    $self->abort_gnupg( "protocol error: expected SHM_GET_XXX got $cmd\n" )
+      unless $optional;
+    $self->next_status( $cmd, $arg );
+    return;
     }
 
     unless ( $arg eq $key ) {
-	$self->abort_gnupg ( "protocol error: expected key $key got $arg\n" )
-	  unless $optional;
-	return;
+    $self->abort_gnupg ( "protocol error: expected key $key got $arg\n" )
+      unless $optional;
+    return;
     }
 
-    my $shmid		= $self->{shmid};
-    my $shm_size	= $self->{shm_size};
+    my $shmid        = $self->{shmid};
+    my $shm_size    = $self->{shm_size};
 
     my $offset = 0;
     shmread $shmid,$offset,0,2
@@ -308,13 +307,13 @@ sub cpr_send($$$;$) {
       if ( ( $shm_size - $offset ) < length $value );
 
     if ( $cmd eq "SHM_GET_BOOL" ) {
-	my $truth = $value ? 1 : 0;
-	shmwrite $shmid, pack( "nC", 1, $truth ), $offset, 3
-	  or $self->abort_gnupg( "shared memory error: $!\n" );
+    my $truth = $value ? 1 : 0;
+    shmwrite $shmid, pack( "nC", 1, $truth ), $offset, 3
+      or $self->abort_gnupg( "shared memory error: $!\n" );
     } else {
-	my $len = length $value;
-	shmwrite $shmid, pack( "na*", $len, $value ), $offset, $len + 2
-	  or $self->abort_gnupg( "shared memory error: $!\n" );
+    my $len = length $value;
+    shmwrite $shmid, pack( "na*", $len, $value ), $offset, $len + 2
+      or $self->abort_gnupg( "shared memory error: $!\n" );
     }
 
     # Set data ready flag
@@ -334,9 +333,9 @@ sub send_passphrase($$) {
       unless $cmd =~ /NEED_PASSPHRASE/;
     $self->cpr_send( "passphrase.enter", $passwd );
     unless ( $passwd ) {
-	my $cmd = $self->read_from_status;
-	$self->abort_gnupg( "Protocol error: expected MISSING_PASSPHRASE got $cmd\n" )
-	  unless $cmd eq "MISSING_PASSPHRASE";
+    my $cmd = $self->read_from_status;
+    $self->abort_gnupg( "Protocol error: expected MISSING_PASSPHRASE got $cmd\n" )
+      unless $cmd eq "MISSING_PASSPHRASE";
     }
 }
 
@@ -348,24 +347,24 @@ sub new($%) {
 
     my $self = {};
     if ($args{homedir}) {
-	croak ( "Invalid home directory: $args{homedir}\n")
-	  unless -d $args{homedir} && -w _ && -x _;
-	$self->{homedir} = $args{homedir};
+    croak ( "Invalid home directory: $args{homedir}\n")
+      unless -d $args{homedir} && -w _ && -x _;
+    $self->{homedir} = $args{homedir};
     }
     if ($args{options}) {
-	croak ( "Invalid options file: $args{options}\n")
-	  unless -r $args{options};
-	$self->{options} = $args{options};
+    croak ( "Invalid options file: $args{options}\n")
+      unless -r $args{options};
+    $self->{options} = $args{options};
     }
     if ( $args{gnupg_path} ) {
-	croak ( "Invalid gpg path: $args{gnupg_path}\n")
-	  unless -x $args{gnupg_path};
-	$self->{gnupg_path} = $args{gnupg_path};
+    croak ( "Invalid gpg path: $args{gnupg_path}\n")
+      unless -x $args{gnupg_path};
+    $self->{gnupg_path} = $args{gnupg_path};
     } else {
-	my ($path) = grep { -x "$_/gpg" } split /:/, $ENV{PATH};
-	croak ( "Couldn't find gpg in PATH ($ENV{PATH})\n" )
-	  unless $path;
-	$self->{gnupg_path} = "$path/gpg";
+    my ($path) = grep { -x "$_/gpg" } split /:/, $ENV{PATH};
+    croak ( "Couldn't find gpg in PATH ($ENV{PATH})\n" )
+      unless $path;
+    $self->{gnupg_path} = "$path/gpg";
     }
     $self->{trace} = $args{trace} ? 1 : 0;
 
@@ -376,51 +375,51 @@ sub DESTROY {
     my $self = shift;
     # Signal our child that it is the end
     if ($self->{gnupg_pid} && kill 0 => $self->{gnupg_pid} ) {
-	kill INT => $self->{gnupg_pid};
+    kill INT => $self->{gnupg_pid};
     }
 }
 
 sub gen_key($%) {
     my ($self,%args) = @_;
 
-    my $algo	  = $args{algo};
+    my $algo      = $args{algo};
     $algo ||= DSA_ELGAMAL;
 
-    my $size	  = $args{size};
+    my $size      = $args{size};
     $size ||= 1024;
     croak ( "Keysize is too small: $size" ) if $size < 768;
     croak ( "Keysize is too big: $size" )   if $size > 2048;
 
-    my $expire	  = $args{valid};
-    $expire		  ||= 0;
+    my $expire      = $args{valid};
+    $expire          ||= 0;
 
     my $passphrase = $args{passphrase} || "";
-    my $name	  = $args{name};
+    my $name      = $args{name};
 
-    croak "Missing key name\n"	  unless $name;
-    croak "Invalid name: $name\n" 
+    croak "Missing key name\n"      unless $name;
+    croak "Invalid name: $name\n"
       unless $name =~ /^\s*[^0-9\<\(\[\]\)\>][^\<\(\[\]\)\>]+$/;
 
-    my $email	  = $args{email};
+    my $email      = $args{email};
     if ( $email ) {
-	croak "Invalid email address: $email"
-	  unless $email =~ /^\s*		# Whitespace are okay
-				[a-zA-Z0-9_-]	# Doesn't start with a dot
-				[a-zA-Z0-9_.-]*
-				\@		# Contains at most one at
-				[a-zA-Z0-9_.-]+
-				[a-zA-Z0-9_-]	# Doesn't end in a dot
-			       /x 
-				 && $email !~ /\.\./;
+    croak "Invalid email address: $email"
+      unless $email =~ /^\s*        # Whitespace are okay
+                [a-zA-Z0-9_-]    # Doesn't start with a dot
+                [a-zA-Z0-9_.-]*
+                \@        # Contains at most one at
+                [a-zA-Z0-9_.-]+
+                [a-zA-Z0-9_-]    # Doesn't end in a dot
+                   /x
+                 && $email !~ /\.\./;
     } else {
-	$email = "";
+    $email = "";
     }
 
-    my $comment	  = $args{comment};
+    my $comment      = $args{comment};
     if ( $comment ) {
-	croak "Invalid characters in comment" if $comment =~ /[()]/;
+    croak "Invalid characters in comment" if $comment =~ /[()]/;
     } else {
-	$comment = "";
+    $comment = "";
     }
 
     $self->command( "gen-key" );
@@ -431,15 +430,15 @@ sub gen_key($%) {
 
     $self->cpr_send("keygen.algo", $algo );
     if ( $algo == ELGAMAL ) {
-	# Shitty interactive program, yes I'm sure.
-	# I'm a program, I can't change my mind now.
-	$self->cpr_send( "keygen.algo.elg_se", 1 )
+        # Shitty interactive program, yes I'm sure.
+        # I'm a program, I can't change my mind now.
+        $self->cpr_send( "keygen.algo.elg_se", 1 )
     }
-    $self->cpr_send( "keygen.size",		$size );
-    $self->cpr_send( "keygen.valid",	$expire );
-    $self->cpr_send( "keygen.name",		$name );
-    $self->cpr_send( "keygen.email",	$email );
-    $self->cpr_send( "keygen.comment",	$comment );
+    $self->cpr_send( "keygen.size",        $size );
+    $self->cpr_send( "keygen.valid",    $expire );
+    $self->cpr_send( "keygen.name",        $name );
+    $self->cpr_send( "keygen.email",    $email );
+    $self->cpr_send( "keygen.comment",    $comment );
 
     $self->send_passphrase( $passphrase );
 
@@ -457,11 +456,11 @@ sub import_keys($%) {
 
     my $count;
     if ( ref $args{keys} ) {
-	$self->args( $args{keys} );
+    $self->args( $args{keys} );
     } else {
-	# Only one file to import
-	$self->{input} = $args{keys};
-	$self->args( [] );
+    # Only one file to import
+    $self->{input} = $args{keys};
+    $self->args( [] );
     }
 
     $self->run_gnupg;
@@ -472,14 +471,14 @@ sub import_keys($%) {
     # We will see one IMPORTED for each key that is imported
   KEY:
     while ( 1 ) {
-	($cmd,$arg) = $self->read_from_status;
-	last KEY unless $cmd =~ /IMPORTED/;
-	$count++
+    ($cmd,$arg) = $self->read_from_status;
+    last KEY unless $cmd =~ /IMPORTED/;
+    $count++
     }
 
     # We will see one IMPORT_RES for all files processed
-    $self->abort_gnupg ( "protocol error expected IMPORT_RES got $cmd\n" )
-      unless $cmd =~ /IMPORT_RES/;
+    $self->abort_gnupg ( "protocol error expected IMPORT_OK got $cmd\n" )
+      unless $cmd =~ /IMPORT_OK/;
     $self->end_gnupg;
 
     # We return the number of imported keys
@@ -490,22 +489,22 @@ sub export_keys($%) {
     my ($self,%args) = @_;
 
     my $options = [];
-    push @$options, "--armor"	    if $args{armor};
+    push @$options, "--armor"        if $args{armor};
 
     $self->{output} = $args{output};
 
     my $keys = [];
     if ( $args{keys}) {
-	push @$keys,
-	  ref $args{keys} ? @{$args{keys}} : $args{keys};
+    push @$keys,
+      ref $args{keys} ? @{$args{keys}} : $args{keys};
     }
 
     if ( $args{secret} ) {
-	$self->command( "export-secret-keys" );
+    $self->command( "export-secret-keys" );
     } elsif ( $args{all} ){
-	$self->command( "export-all" );
+    $self->command( "export-all" );
     } else {
-	$self->command( "export" );
+    $self->command( "export" );
     }
     $self->options( $options );
     $self->args( $keys );
@@ -522,22 +521,22 @@ sub encrypt($%) {
       unless $args{recipient} or $args{symmetric};
     push @$options, "--recipient" => $args{recipient};
 
-    push @$options, "--sign"	    if $args{sign};
+    push @$options, "--sign"        if $args{sign};
     croak ( "can't sign an symmetric encrypted message\n" )
       if $args{sign} and $args{symmetric};
 
     my $passphrase  = $args{passphrase} || "";
 
-    push @$options, "--armor"	    if $args{armor};
+    push @$options, "--armor"        if $args{armor};
     push @$options, "--local-user", $args{"local-user"}
       if defined $args{"local-user"};
 
     $self->{input}  = $args{plaintext} || $args{input};
     $self->{output} = $args{output};
     if ( $args{symmetric} ) {
-	$self->command( "symmetric" );
+    $self->command( "symmetric" );
     } else {
-	$self->command( "encrypt" );
+    $self->command( "encrypt" );
     }
     $self->options( $options );
     $self->args( [] );
@@ -546,12 +545,12 @@ sub encrypt($%) {
 
     # Unless we decided to sign or are using symmetric cipher, we are done
     if ( $args{sign} or $args{symmetric} ) {
-	$self->send_passphrase( $passphrase );
-	if ( $args{sign} ) {
-	    my ($cmd,$line) = $self->read_from_status;
-	    $self->abort_gnupg( "invalid passphrase\n" )
-	      unless $cmd =~ /GOOD_PASSPHRASE/;
-	}
+        $self->send_passphrase( $passphrase );
+        if ( $args{sign} ) {
+            my ($cmd,$line) = $self->read_from_status;
+            $self->abort_gnupg( "invalid passphrase - $cmd\n" )
+              unless $cmd =~ /GOOD_PASSPHRASE/;
+        }
     }
 
     # It is possible that this key has no assigned trust value.
@@ -567,18 +566,18 @@ sub sign($%) {
     my $options = [];
     my $passphrase  = $args{passphrase} || "";
 
-    push @$options, "--armor"	    if $args{armor};
+    push @$options, "--armor"        if $args{armor};
     push @$options, "--local-user", $args{"local-user"}
       if defined $args{"local-user"};
 
     $self->{input}  = $args{plaintext} || $args{input};
     $self->{output} = $args{output};
     if ( $args{clearsign} ) {
-	$self->command( "clearsign" );
+    $self->command( "clearsign" );
     } elsif ( $args{"detach-sign"}) {
-	$self->command( "detach-sign" );
+    $self->command( "detach-sign" );
     } else {
-	$self->command( "sign" );
+    $self->command( "sign" );
     }
     $self->options( $options );
     $self->args( [] );
@@ -588,7 +587,7 @@ sub sign($%) {
     # We need to unlock the private key
     $self->send_passphrase( $passphrase );
     my ($cmd,$line) = $self->read_from_status;
-    $self->abort_gnupg( "invalid passphrase\n" )
+    $self->abort_gnupg( "invalid passphrase - $cmd\n" )
       unless $cmd =~ /GOOD_PASSPHRASE/;
 
     $self->end_gnupg unless $args{tie_mode};
@@ -611,12 +610,30 @@ sub check_sig($;$$) {
     ( $cmd, $arg ) = $self->read_from_status()
       if ( $cmd =~ /RSA_OR_IDEA/ );
 
+    # Ignore automatic key imports
+    ( $cmd, $arg ) = $self->read_from_status()
+      if ( $cmd =~ /IMPORTED/ );
+
+    ( $cmd, $arg ) = $self->read_from_status()
+      if ( $cmd =~ /IMPORT_OK/ );
+
+    ( $cmd, $arg ) = $self->read_from_status()
+      if ( $cmd =~ /IMPORT_RES/ );
+
     $self->abort_gnupg( "invalid signature from ", $arg =~ /[^ ](.+)/, "\n" )
       if ( $cmd =~ /BADSIG/);
 
-    $self->abort_gnupg( "error verifying signature from ", 
-			$arg =~ /([^ ])/, "\n" )
-      if ( $cmd =~ /ERRSIG/);
+    if ( $cmd =~ /ERRSIG/)
+      {
+        my ($keyid, $key_algo, $digest_algo, $sig_class, $timestamp, $rc)
+           = split ' ', $arg;
+        if ($rc == 9)
+          {
+            ($cmd, $arg) = $self->read_from_status();
+            $self->abort_gnupg( "no public key $keyid" );
+          }
+        $self->abort_gnupg( "error verifying signature from $keyid" )
+      }
 
     $self->abort_gnupg ( "protocol error: expected SIG_ID" )
       unless $cmd =~ /SIG_ID/;
@@ -628,6 +645,12 @@ sub check_sig($;$$) {
     my ( $keyid, $name ) = split /\s+/, $arg, 2;
 
     ( $cmd, $arg ) = $self->read_from_status;
+    my $policy_url = undef;
+    if ( $cmd =~ /POLICY_URL/ ) {
+        $policy_url = $arg;
+        ( $cmd, $arg ) = $self->read_from_status;
+    }
+
     $self->abort_gnupg ( "protocol error: expected VALIDSIG" )
       unless $cmd =~ /VALIDSIG/;
     my ( $fingerprint ) = split /\s+/, $arg, 2;
@@ -637,14 +660,15 @@ sub check_sig($;$$) {
       unless $cmd =~ /TRUST/;
     my ($trust) = parse_trust( $cmd );
 
-    return { sigid	    => $sigid,
-	     date	    => $date,
-	     timestamp	    => $time,
-	     keyid	    => $keyid,
-	     user	    => $name,
-	     fingerprint    => $fingerprint,
-	     trust	    => $trust,
-	   };
+    return { sigid        => $sigid,
+         date        => $date,
+         timestamp        => $time,
+         keyid        => $keyid,
+         user        => $name,
+         fingerprint    => $fingerprint,
+         trust        => $trust,
+         policy_url        => $policy_url,
+       };
 }
 
 sub verify($%) {
@@ -653,12 +677,12 @@ sub verify($%) {
     croak ( "missing signature argument\n" ) unless $args{signature};
     my $files = [];
     if ( $args{file} ) {
-	croak ( "detached signature must be in a file\n" ) 
-	  unless -f $args{signature};
-	push @$files, $args{signature}, 
-	  ref $args{file} ? @{$args{file}} : $args{file};
+    croak ( "detached signature must be in a file\n" )
+      unless -f $args{signature};
+    push @$files, $args{signature},
+      ref $args{file} ? @{$args{file}} : $args{file};
     } else {
-	$self->{input} = $args{signature};
+    $self->{input} = $args{signature};
     }
     $self->command( "verify" );
     $self->options( [] );
@@ -694,29 +718,27 @@ sub decrypt_postwrite($%) {
 
     my ( $cmd, $arg );
     unless ( $args{symmetric} ) {
-	( $cmd, $arg ) = $self->read_from_status;
-	$self->abort_gnupg ( "protocol error: expected ENC_TO got $cmd: \n" )
-	  unless $cmd =~ /ENC_TO/;
+    ( $cmd, $arg ) = $self->read_from_status;
+    $self->abort_gnupg ( "protocol error: expected ENC_TO got $cmd: \n" )
+      unless $cmd =~ /ENC_TO/;
     }
 
     $self->send_passphrase( $passphrase );
 
     ($cmd,$arg) = $self->read_from_status;
-    $self->abort_gnupg ( "invalid passphrase\n" )
+    $self->abort_gnupg ( "invalid passphrase - $cmd\n" )
       if $cmd =~ /BAD_PASSPHRASE/;
     my $sig = undef;
     if ( ! $args{symmetric} ) {
-	$self->abort_gnupg ( "protocol error: expected GOOD_PASSPHRASE got $cmd: \n" )
-	  unless $cmd =~ /GOOD_PASSPHRASE/;
+    $self->abort_gnupg ( "protocol error: expected GOOD_PASSPHRASE got $cmd: \n" )
+      unless $cmd =~ /GOOD_PASSPHRASE/;
 
-	$sig = $self->decrypt_postread() unless $args{tie_mode};
+    $sig = $self->decrypt_postread() unless $args{tie_mode};
     } else {
-	# gnupg 1.0.2 adds this status message
-	( $cmd, $arg ) = $self->read_from_status()
-	  if $cmd =~ /BEGIN_DECRYPTION/;
+        # gnupg 1.0.2 adds this status message
+        ( $cmd, $arg ) = $self->read_from_status() if $cmd =~ /BEGIN_DECRYPTION/;
 
-	$self->abort_gnupg( "invalid passphrase" )
-	  unless $cmd =~ /DECRYPTION_OKAY/;
+        $self->abort_gnupg( "invalid passphrase - $cmd" ) unless $cmd =~ /PLAINTEXT/;
     }
 
     $self->end_gnupg() unless $args{tie_mode};
@@ -727,19 +749,27 @@ sub decrypt_postwrite($%) {
 sub decrypt_postread($) {
     my $self = shift;
 
+    my @cmds;
     # gnupg 1.0.2 adds this status message
     my ( $cmd, $arg ) = $self->read_from_status;
+    push @cmds, $cmd;
 
-    ( $cmd, $arg ) = $self->read_from_status()
-      if $cmd =~ /BEGIN_DECRYPTION/;
+    if ($cmd =~ /BEGIN_DECRYPTION/) {
+    ( $cmd, $arg ) = $self->read_from_status();
+    push @cmds, $cmd;
+    };
 
     my $sig = undef;
+    while (defined $cmd && !($cmd =~ /DECRYPTION_OKAY/)) {
     if ( $cmd =~ /SIG_ID/ ) {
-	$sig = $self->check_sig( $cmd, $arg );
-	( $cmd, $arg ) = $self->read_from_status;
+        $sig = $self->check_sig( $cmd, $arg );
     }
+    ( $cmd, $arg ) = $self->read_from_status();
+    push @cmds, $cmd if defined $cmd;
+    };
 
-    $self->abort_gnupg( "protocol error: expected DECRYPTION_OKAY got $cmd: \n" )
+    my $cmds = join ', ', @cmds;
+    $self->abort_gnupg( "protocol error: expected DECRYPTION_OKAY but never got it (all I saw was: $cmds): \n" )
       unless $cmd =~ /DECRYPTION_OKAY/;
 
     return $sig ? $sig : 1;
@@ -760,26 +790,26 @@ GnuPG - Perl module interface to the GNU Privacy Guard.
 
     my $gpg = new GnuPG();
 
-    $gpg->encrypt(  plaintext	=> "file.txt",	output	    => "file.gpg",
-		    armor	=> 1,		 sign	=> 1,
-		    passphrase  => $secret );
+    $gpg->encrypt(  plaintext    => "file.txt",    output        => "file.gpg",
+            armor    => 1,         sign    => 1,
+            passphrase  => $secret );
 
-    $gpg->decrypt( ciphertext	=> "file.gpg",	output	    => "file.txt" );
+    $gpg->decrypt( ciphertext    => "file.gpg",    output        => "file.txt" );
 
     $gpg->clearsign( plaintext => "file.txt", output => "file.txt.asc",
-		     passphrase => $secret,   armor => 1,
-		    );
+             passphrase => $secret,   armor => 1,
+            );
 
     $gpg->verify( signature => "file.txt.asc", file => "file.txt" );
 
-    $gpg->gen_key( name => "Joe Blow",	    comment => "My GnuPG key",
-		   passphrase => $secret,
-		    );
+    $gpg->gen_key( name => "Joe Blow",        comment => "My GnuPG key",
+           passphrase => $secret,
+            );
 
 =head1 DESCRIPTION
 
 GnuPG is a perl interface to the GNU Privacy Guard. It uses the
-shared memory coprocess interface that gpg provides for its 
+shared memory coprocess interface that gpg provides for its
 wrappers. It tries its best to map the interactive interface of
 the gpg to a more programmatic model.
 
@@ -860,7 +890,7 @@ How long the key is valid. Defaults to 0 or never expire.
 
 =item name
 
-This is the only mandatory argument. This is the name that will used 
+This is the only mandatory argument. This is the name that will used
 to construct the user id.
 
 =item email
@@ -879,7 +909,7 @@ but strongly recommended.
 =back
 
     Example: $gpg->gen_key( algo => DSA_ELGAMAL, size => 1024,
-			    name => "My name" );
+                name => "My name" );
 
 =head2 import_keys( [params] )
 
@@ -908,7 +938,7 @@ encounters an error. Parameters :
 
 =item keys
 
-Optional argument that restricts the keys that will be exported. 
+Optional argument that restricts the keys that will be exported.
 Can either be a user id or a reference to an array of userid that
 specifies the keys to be exported. If left unspecified, all keys
 will be exported.
@@ -926,7 +956,7 @@ OpenPGP compliant) will be exported.
 =item output
 
 This argument specifies where the keys will be exported. Can be either
-a file name or a reference to a file handle. If not specified, the 
+a file name or a reference to a file handle. If not specified, the
 keys will be exported to stdout.
 
 =item armor
@@ -999,8 +1029,8 @@ key.
 =back
 
     Example: $gpg->encrypt( plaintext => file.txt, output => "file.gpg",
-			    sign => 1, passphrase => $secret
-			    );
+                sign => 1, passphrase => $secret
+                );
 
 =head2 sign( [params] )
 
@@ -1044,8 +1074,8 @@ the whole file.
 =back
 
     Example: $gpg->sign( plaintext => "file.txt", output => "file.txt.asc",
-			 armor => 1,
-			 );
+             armor => 1,
+             );
 
 =head2 clearsign( [params] )
 
@@ -1110,13 +1140,13 @@ The fingerprint of the signature.
 =item trust
 
 The trust value of the public key of the signer. Those are values that
-can be imported in your namespace with the :trust tag. They are 
+can be imported in your namespace with the :trust tag. They are
 (TRUST_UNDEFINED, TRUST_NEVER, TRUST_MARGINAL, TRUST_FULLY, TRUST_ULTIMATE).
 
 =back
 
     Example : my $sig = $gpg->verify( signature => "file.txt.asc",
-				      file => "file.txt" );
+                      file => "file.txt" );
 
 =head2 decrypt( [params] )
 
@@ -1130,7 +1160,7 @@ true. Method parameters :
 
 =item ciphertext
 
-This optional parameter contains either the name of the file 
+This optional parameter contains either the name of the file
 containing the ciphertext or a reference to a file handle containing
 the ciphertext. If not present, STDIN will be decrypted.
 
@@ -1154,8 +1184,8 @@ message.
 
 =back
 
-    Example: $gpg->decrypt( ciphertext => "file.gpg", output => "file.txt" 
-			    passphrase => $secret );
+    Example: $gpg->decrypt( ciphertext => "file.gpg", output => "file.txt"
+                passphrase => $secret );
 
 =head1 AUTHOR
 

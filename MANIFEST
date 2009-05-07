@@ -16,3 +16,6 @@ test.pl
 test/key1.pub
 test/key2.pub
 test/file.txt
+debian/changelog
+debian/copyright
+META.yml                                 Module meta-data (added by MakeMaker)
