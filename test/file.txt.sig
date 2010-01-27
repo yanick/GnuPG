@@ -1,0 +1,8 @@
+-----BEGIN PGP MESSAGE-----
+Version: GnuPG v1.4.5 (GNU/Linux)
+
+owGbwMvMwCQoPIFB+ufs0iDGNbJJHGmZOal6JRUl3gm9CiEZmcUKQJSoUJJaXMLV
+Yc/MygASh2kQZGrqYpif6/LhTMaHYuklkz5mHbT2Etv+RtGGYX59YlKYfk53gd0b
+O/HO1S9Vmq+eMgQA
+=GDs1
+-----END PGP MESSAGE-----

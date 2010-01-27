@@ -1,4 +1,11 @@
 ----------------------------------
+Noteworthy changes in version 0.11 (2010-01-27)
+----------------------------------
+
+	* Module can now run in Apache environment.
+        * Fix  Allows undef passphrases (for keys without them)
+
+----------------------------------
 Noteworthy changes in version 0.09 (2001-06-08)
 ----------------------------------
 
