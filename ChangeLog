@@ -1,6 +1,10 @@
+2010-02-03  version 0.12 Mark Frost
+
+    * This release is merely some documentation fixes
+
 2010-01-27  version 0.11 Mark Frost
 
-    * The module should not properly handle the situation where a key is 
+    * The module should now properly handle the situation where a key is 
     setup with a blank passphrase, as long as passphrase => undef is provided 
     (or left out)
     * Fixed an issue where STDIN and STDOUT cannot be overridden in an 

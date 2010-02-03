@@ -47,7 +47,7 @@ BEGIN {
 
     Exporter::export_ok_tags( qw( algo trust ) );
 
-    $VERSION = '0.10';
+    $VERSION = '0.11';
 }
 
 use constant DSA_ELGAMAL    => 1;
@@ -887,7 +887,7 @@ those constant in your name space, use the :algo tag.
 
 The size of the public key. Defaults to 1024. Cannot be less than
 768 bits, and keys longer than 2048 are also discouraged. (You *DO*
-know that your monitor may be leaking sensitive informations ;-).
+know that your monitor may be leaking sensitive information ;-).
 
 =item valid
 
