@@ -47,7 +47,7 @@ BEGIN {
 
     Exporter::export_ok_tags( qw( algo trust ) );
 
-    $VERSION = '0.11';
+    $VERSION = '0.13';
 }
 
 use constant DSA_ELGAMAL    => 1;
@@ -184,6 +184,7 @@ sub read_from_status($) {
 
     my ( $cmd,$arg ) = $line =~ /\[GNUPG:\] (\w+) ?(.+)?$/;
     $self->abort_gnupg( "error communicating with gnupg: bad status line: $line\n" ) unless $cmd;
+    print STDERR "Read in " . $cmd . " - " . $arg if $self->{trace};
     return wantarray ? ( $cmd, $arg ) : $cmd;
 }
 
@@ -243,8 +244,7 @@ sub run_gnupg($) {
         open ( STDIN, "<&" . fileno $self->{input} )
           or die "error setting up data input: $!\n";
     } elsif ( $self->{input} ) {
-        open ( STDIN, $self->{input} )
-          or die "error setting up data input: $!\n";
+      push(@$cmdline, $self->{input});
     } # Defaults to stdin
 
     # This is where the output goes
@@ -252,8 +252,7 @@ sub run_gnupg($) {
         open ( STDOUT, ">&" . fileno $self->{output} )
           or die "can't redirect stdout to proper output fd: $!\n";
     } elsif ( $self->{output} ) {
-        open ( STDOUT, ">".$self->{output} )
-          or die "can't open $self->{output} for output: $!\n";
+      push(@$cmdline, '> ' . $self->{output});
     } # Defaults to stdout
 
     # Close all open file descriptors except STDIN, STDOUT, STDERR
@@ -269,7 +268,7 @@ sub run_gnupg($) {
         POSIX::close( $f );
     }
 
-    exec ( @$cmdline )
+    exec ( join(' ', @$cmdline) )
       or CORE::die "can't exec gnupg: $!\n";
     }
 }
@@ -329,6 +328,10 @@ sub send_passphrase($$) {
     my $cmd = $self->read_from_status;
     # Skip UserID hint
     $cmd = $self->read_from_status if ( $cmd =~ /USERID_HINT/ );
+    if ($cmd =~ /GOOD_PASSPHRASE/) { # This means we didnt need a passphrase
+      $self->{next_status} = ["GOOD_PASSPHRASE"]; # We push this back on for read_from_status
+      return; 
+    }
     $self->abort_gnupg( "Protocol error: expected NEED_PASSPHRASE.* got $cmd\n")
       unless $cmd =~ /NEED_PASSPHRASE/;
     $self->cpr_send( "passphrase.enter", $passwd );
@@ -587,7 +590,7 @@ sub sign($%) {
     # We need to unlock the private key
     $self->send_passphrase( $passphrase );
     my ($cmd,$line) = $self->read_from_status;
-    $self->abort_gnupg( "invalid passphrase - $cmd\n" )
+    $self->abort_gnupg( "invalid passphrase - $cmd\n" ) 
       unless $cmd =~ /GOOD_PASSPHRASE/;
 
     $self->end_gnupg unless $args{tie_mode};
@@ -708,7 +711,7 @@ sub decrypt($%) {
 
     $self->run_gnupg;
 
-    $self->decrypt_postwrite( @_ ) unless $args{tie_mode};
+    return $self->decrypt_postwrite( @_ ) unless $args{tie_mode};
 }
 
 sub decrypt_postwrite($%) {
@@ -724,16 +727,18 @@ sub decrypt_postwrite($%) {
     }
 
     $self->send_passphrase( $passphrase );
-
     ($cmd,$arg) = $self->read_from_status;
+
     $self->abort_gnupg ( "invalid passphrase - $cmd\n" )
       if $cmd =~ /BAD_PASSPHRASE/;
-    my $sig = undef;
-    if ( ! $args{symmetric} ) {
-    $self->abort_gnupg ( "protocol error: expected GOOD_PASSPHRASE got $cmd: \n" )
-      unless $cmd =~ /GOOD_PASSPHRASE/;
 
-    $sig = $self->decrypt_postread() unless $args{tie_mode};
+    my $sig = undef;
+
+    if ( ! $args{symmetric} ) {
+      $self->abort_gnupg ( "protocol error: expected GOOD_PASSPHRASE got $cmd: \n" )
+        unless $cmd =~ /GOOD_PASSPHRASE/;
+
+      $sig = $self->decrypt_postread() unless $args{tie_mode};
     } else {
         # gnupg 1.0.2 adds this status message
         ( $cmd, $arg ) = $self->read_from_status() if $cmd =~ /BEGIN_DECRYPTION/;
