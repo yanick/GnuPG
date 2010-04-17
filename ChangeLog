@@ -1,3 +1,7 @@
+2010-04-16  version 0.14 Mark Frost
+
+    * Fixed an endless read-wait scenario introduced in 0.13
+
 2010-04-16  version 0.13 Mark Frost
 
     * Catching up some outstanding changes I left out in releases 11 and 12

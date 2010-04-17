@@ -47,7 +47,7 @@ BEGIN {
 
     Exporter::export_ok_tags( qw( algo trust ) );
 
-    $VERSION = '0.13';
+    $VERSION = '0.14';
 }
 
 use constant DSA_ELGAMAL    => 1;
@@ -243,16 +243,24 @@ sub run_gnupg($) {
     if ( ref $self->{input} && defined fileno $self->{input} ) {
         open ( STDIN, "<&" . fileno $self->{input} )
           or die "error setting up data input: $!\n";
+    } elsif ( $self->{input} && -t STDIN) {
+        open ( STDIN, $self->{input} )
+          or die "error setting up data input: $!\n";
     } elsif ( $self->{input} ) {
-      push(@$cmdline, $self->{input});
-    } # Defaults to stdin
+      push(@{$cmdline}, $self->{input});
+    }# Defaults to stdin
 
     # This is where the output goes
     if ( ref $self->{output} && defined fileno $self->{output} ) {
         open ( STDOUT, ">&" . fileno $self->{output} )
           or die "can't redirect stdout to proper output fd: $!\n";
+    } elsif ( $self->{output} && -t STDOUT ) {
+        open ( STDOUT, ">".$self->{output} )
+          or die "can't open $self->{output} for output: $!\n";
     } elsif ( $self->{output} ) {
-      push(@$cmdline, '> ' . $self->{output});
+      my $gpg = shift(@{$cmdline});
+      unshift(@{$cmdline}, '--yes --output ' . $self->{output});
+      unshift(@{$cmdline}, $gpg);
     } # Defaults to stdout
 
     # Close all open file descriptors except STDIN, STDOUT, STDERR
@@ -329,7 +337,7 @@ sub send_passphrase($$) {
     # Skip UserID hint
     $cmd = $self->read_from_status if ( $cmd =~ /USERID_HINT/ );
     if ($cmd =~ /GOOD_PASSPHRASE/) { # This means we didnt need a passphrase
-      $self->{next_status} = ["GOOD_PASSPHRASE"]; # We push this back on for read_from_status
+      $self->next_status($cmd); # We push this back on for read_from_status
       return; 
     }
     $self->abort_gnupg( "Protocol error: expected NEED_PASSPHRASE.* got $cmd\n")
