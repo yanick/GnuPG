@@ -47,7 +47,7 @@ BEGIN {
 
     Exporter::export_ok_tags( qw( algo trust ) );
 
-    $VERSION = '0.14';
+    $VERSION = '0.16';
 }
 
 use constant DSA_ELGAMAL    => 1;
@@ -101,7 +101,7 @@ sub cmdline($) {
 
     # Default options
     push @$args, "--no-tty" unless $self->{trace};
-    push @$args, "--no-greeting", "--status-fd", fileno $self->{status_fd},
+    push @$args, "--no-greeting", "--yes", "--status-fd", fileno $self->{status_fd},
          "--run-as-shm-coprocess", "0";
 
     # Check for homedir and options file
@@ -259,7 +259,7 @@ sub run_gnupg($) {
           or die "can't open $self->{output} for output: $!\n";
     } elsif ( $self->{output} ) {
       my $gpg = shift(@{$cmdline});
-      unshift(@{$cmdline}, '--yes --output ' . $self->{output});
+      unshift(@{$cmdline}, '--output ' . $self->{output});
       unshift(@{$cmdline}, $gpg);
     } # Defaults to stdout
 
@@ -275,6 +275,8 @@ sub run_gnupg($) {
         next if $f == fileno $self->{status_fd};
         POSIX::close( $f );
     }
+
+    print STDERR "GnuPG: executing `" . join(' ', @$cmdline) . "`" if $self->{trace};
 
     exec ( join(' ', @$cmdline) )
       or CORE::die "can't exec gnupg: $!\n";
@@ -530,7 +532,7 @@ sub encrypt($%) {
     my $options = [];
     croak ( "no recipient specified\n" )
       unless $args{recipient} or $args{symmetric};
-    push @$options, "--recipient" => $args{recipient};
+    push @$options, "--recipient" => "'" . $args{recipient} . "'";
 
     push @$options, "--sign"        if $args{sign};
     croak ( "can't sign an symmetric encrypted message\n" )
