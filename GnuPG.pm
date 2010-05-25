@@ -47,7 +47,7 @@ BEGIN {
 
     Exporter::export_ok_tags( qw( algo trust ) );
 
-    $VERSION = '0.16';
+    $VERSION = '0.17';
 }
 
 use constant DSA_ELGAMAL    => 1;
@@ -259,7 +259,7 @@ sub run_gnupg($) {
           or die "can't open $self->{output} for output: $!\n";
     } elsif ( $self->{output} ) {
       my $gpg = shift(@{$cmdline});
-      unshift(@{$cmdline}, '--output ' . $self->{output});
+      unshift(@{$cmdline}, '--output', $self->{output});
       unshift(@{$cmdline}, $gpg);
     } # Defaults to stdout
 
@@ -276,9 +276,9 @@ sub run_gnupg($) {
         POSIX::close( $f );
     }
 
-    print STDERR "GnuPG: executing `" . join(' ', @$cmdline) . "`" if $self->{trace};
+    print STDERR "GnuPG: executing `" . @{$cmdline} . "`" if 1 ||$self->{trace};
 
-    exec ( join(' ', @$cmdline) )
+    exec ( @$cmdline )
       or CORE::die "can't exec gnupg: $!\n";
     }
 }
@@ -532,7 +532,8 @@ sub encrypt($%) {
     my $options = [];
     croak ( "no recipient specified\n" )
       unless $args{recipient} or $args{symmetric};
-    push @$options, "--recipient" => "'" . $args{recipient} . "'";
+    $args{recipient} =~ s/ /\ /g; # Escape spaces in the recipient. This fills some strange edge case
+    push @$options, "--recipient" => $args{recipient};
 
     push @$options, "--sign"        if $args{sign};
     croak ( "can't sign an symmetric encrypted message\n" )

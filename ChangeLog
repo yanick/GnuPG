@@ -1,3 +1,7 @@
+2010-05-25  version 0.17 Mark Frost
+
+    * Applied a patch written by Niko Tyni to fix a hanging issue discovered by Salvatore Bonaccorso in chroot environments.
+
 2010-04-19  version 0.16 Mark Frost
 
     * Fixed a hanging issue that came up under certain scenarios. 

@@ -1,6 +1,6 @@
 Summary: Perl interface to the Gnu Privacy Guard
 Name: GnuPG
-Version: 0.16
+Version: 0.17
 Release: 1c
 Source: http://www.cpan.org/modules/by-module/GnuPG/%{name}-%{version}.tar.gz
 Copyright: GPL
@@ -41,6 +41,10 @@ rm -fr $RPM_BUILD_ROOT
 %doc README ChangeLog NEWS
 
 %changelog
+* Tue May 25 2010  Mark B. Frost <mark.frost@icainformatics.com> 
+  [0.17-1c]
+- Updated to version 0.17.
+
 * Fri Apr 16 2010  Mark B. Frost <mark.frost@icainformatics.com> 
   [0.16-1c]
 - Updated to version 0.16.
