@@ -361,7 +361,7 @@ sub new($%) {
     my $self = {};
     if ($args{homedir}) {
     croak ( "Invalid home directory: $args{homedir}\n")
-      unless -d $args{homedir} && -w _ && -x _;
+      unless -d $args{homedir} && -x _;
     $self->{homedir} = $args{homedir};
     }
     if ($args{options}) {
