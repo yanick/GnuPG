@@ -45,6 +45,7 @@ my @tests = qw(
                 tie_encrypt_test
                 tie_decrypt_test
                 tie_decrypt_para_mode_test
+                multiple_recipients 
     	        );
 
 if ( defined $ENV{TESTS} ) {
@@ -62,6 +63,20 @@ for ( @tests ) {
     };
 
     (ok !$@, $_) || diag $@;
+}
+
+sub multiple_recipients {
+    $gpg->encrypt(
+          recipient => [ USERID, UNTRUSTED ],
+		  output    => "test/file.txt.gpg",
+		  armor	    => 1,
+		  plaintext => "test/file.txt",
+    );
+
+    open my $fh, '<', "test/file.txt.gpg";
+
+    die "'test/file.txt.gpg' is empty\n" unless -s 'test/file.txt.gpg';
+
 }
 
 
