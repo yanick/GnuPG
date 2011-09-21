@@ -532,8 +532,14 @@ sub encrypt($%) {
     my $options = [];
     croak ( "no recipient specified\n" )
       unless $args{recipient} or $args{symmetric};
-    $args{recipient} =~ s/ /\ /g; # Escape spaces in the recipient. This fills some strange edge case
-    push @$options, "--recipient" => $args{recipient};
+
+    for my $recipient ( 
+            ref $args{recipient} eq 'ARRAY' 
+                ? @{ $args{recipient} } 
+                : $args{recipient}              ) {
+        $recipient =~ s/ /\ /g; # Escape spaces in the recipient. This fills some strange edge case
+        push @$options, "--recipient" => $recipient;
+    }
 
     push @$options, "--sign"        if $args{sign};
     croak ( "can't sign an symmetric encrypted message\n" )
@@ -1026,7 +1032,8 @@ parameter.
 If not using symmetric cryptography, you will have to provide this
 parameter. It should contains the userid of the intended recipient of
 the message. It will be used to look up the key to use to encrypt the
-message.
+message. The parameter can also take an array ref, if you want to encrypt
+the message for a group of recipients.
 
 =item sign
 
