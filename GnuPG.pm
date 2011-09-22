@@ -24,8 +24,9 @@
 #
 package GnuPG;
 
-
 use strict;
+
+use POSIX qw/ dup2 /;
 
 use vars qw($VERSION @ISA @EXPORT @EXPORT_OK  %EXPORT_TAGS );
 
@@ -240,28 +241,48 @@ sub run_gnupg($) {
     }
 
     # This is where we grab the data
-    if ( ref $self->{input} && defined fileno $self->{input} ) {
-        open ( STDIN, "<&" . fileno $self->{input} )
-          or die "error setting up data input: $!\n";
-    } elsif ( $self->{input} && -t STDIN) {
-        open ( STDIN, $self->{input} )
-          or die "error setting up data input: $!\n";
-    } elsif ( $self->{input} ) {
-      push(@{$cmdline}, $self->{input});
-    }# Defaults to stdin
+
+    my $input_fd = fileno(STDIN);
+
+    if( $self->{input} ) {
+        if ( ref $self->{input} && defined fileno $self->{input} ) {
+            $input_fd = fileno $self->{input};
+        }
+        elsif ( -t STDIN ) {
+            open( STDIN, $self->{input} )
+            or die "error setting up data input: $!\n";
+        }
+        else {
+            push( @{$cmdline}, $self->{input} ); 
+        }
+    }
+
+    if ( $input_fd != 0 ) {
+        dup2( $input_fd, 0 ) or die "error setting up data input: $!\n";
+    }
 
     # This is where the output goes
-    if ( ref $self->{output} && defined fileno $self->{output} ) {
-        open ( STDOUT, ">&" . fileno $self->{output} )
-          or die "can't redirect stdout to proper output fd: $!\n";
-    } elsif ( $self->{output} && -t STDOUT ) {
-        open ( STDOUT, ">".$self->{output} )
-          or die "can't open $self->{output} for output: $!\n";
-    } elsif ( $self->{output} ) {
-      my $gpg = shift(@{$cmdline});
-      unshift(@{$cmdline}, '--output', $self->{output});
-      unshift(@{$cmdline}, $gpg);
-    } # Defaults to stdout
+
+    my $output_fd = fileno(STDOUT);
+
+    if( $self->{output} ) {
+        if ( ref $self->{output} && defined fileno $self->{output} ) {
+            $output_fd = fileno $self->{output};
+        }
+        elsif ( -t STDOUT ) {
+            open( STDOUT, $self->{output} )
+            or die "error setting up data output: $!\n";
+        }
+        else {
+            my $gpg = shift @{$cmdline};
+            unshift @{$cmdline}, '--output', $self->{output};
+            unshift @{$cmdline}, $gpg;
+        }
+    }
+
+    if ( $output_fd != 0 ) {
+        dup2( $output_fd, 1 ) or die "error setting up data output: $!\n";
+    }
 
     # Close all open file descriptors except STDIN, STDOUT, STDERR
     # and the status filedescriptor.
