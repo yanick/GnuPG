@@ -1,6 +1,6 @@
 Summary: Perl interface to the Gnu Privacy Guard
 Name: GnuPG
-Version: 0.17
+Version: 0.18
 Release: 1c
 Source: http://www.cpan.org/modules/by-module/GnuPG/%{name}-%{version}.tar.gz
 Copyright: GPL
@@ -41,6 +41,12 @@ rm -fr $RPM_BUILD_ROOT
 %doc README ChangeLog NEWS
 
 %changelog
+* Mon Nov 21 2011 Yanick Champoux <yanick@cpan.org>
+  [0.18-1c]
+- encrypt() now accept many recipients. [RT71127]
+- new() doesn't die if 'homedir' isn't writeable. [RT568] 
+    (bug reported by Mark Stosberg)
+
 * Tue May 25 2010  Mark B. Frost <mark.frost@icainformatics.com> 
   [0.17-1c]
 - Updated to version 0.17.

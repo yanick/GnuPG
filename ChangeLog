@@ -1,3 +1,9 @@
+2011-11-21  version 0.18 
+
+	* encrypt() now accept many recipients. [RT71127]
+	* new() doesn't die if 'homedir' isn't writeable. 
+		[RT568] (bug reported by Mark Stosberg)
+
 2010-05-25  version 0.17 Mark Frost
 
     * Applied a patch written by Niko Tyni to fix a hanging issue discovered by Salvatore Bonaccorso in chroot environments.
