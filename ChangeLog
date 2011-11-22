@@ -1,3 +1,7 @@
+XXX
+	* POD typo fix. (patch by Salvatore Bonaccorso) [RT72600]
+
+
 2011-11-21  version 0.18 
 
 	* encrypt() now accept many recipients. [RT71127]
