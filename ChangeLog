@@ -1,4 +1,4 @@
-2011-XX-XX  version 0.18 
+2011-11-21  version 0.18 
 
 	* encrypt() now accept many recipients. [RT71127]
 	* new() doesn't die if 'homedir' isn't writeable. 
