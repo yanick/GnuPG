@@ -1,5 +1,6 @@
 XXX
 	* POD typo fix. (patch by Salvatore Bonaccorso) [RT72600]
+	* Don't use deprecated shared memory mode (patch by Adam Benjamin)
 	* Log format. (pointed out by Adam Benjamin)
 	* command output parsing for newer gnupg (patch by Adam Benjamin)
 
