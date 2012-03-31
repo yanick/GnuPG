@@ -760,6 +760,7 @@ sub decrypt_postwrite($%) {
     } else {
         # gnupg 1.0.2 adds this status message
         ( $cmd, $arg ) = $self->read_from_status() if $cmd =~ /BEGIN_DECRYPTION/;
+        ( $cmd, $arg ) = $self->read_from_status() if $cmd =~ /DECRYPTION_INFO/;
 
         $self->abort_gnupg( "invalid passphrase - $cmd" ) unless $cmd =~ /PLAINTEXT/;
     }
