@@ -276,7 +276,8 @@ sub run_gnupg($) {
         POSIX::close( $f );
     }
 
-    print STDERR "GnuPG: executing `" . @{$cmdline} . "`" if 1 ||$self->{trace};
+    print STDERR 'GnuPG: executing `' 
+        . join( ' ',  @{$cmdline} ) . '`' if $self->{trace};
 
     exec ( @$cmdline )
       or CORE::die "can't exec gnupg: $!\n";

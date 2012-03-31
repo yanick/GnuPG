@@ -1,5 +1,6 @@
 XXX
 	* POD typo fix. (patch by Salvatore Bonaccorso) [RT72600]
+	* Log format. (pointed out by Adam Benjamin)
 
 
 2011-11-21  version 0.18 
