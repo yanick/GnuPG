@@ -37,9 +37,7 @@ BEGIN {
     @EXPORT = qw();
 
     %EXPORT_TAGS = (
-            algo   => [ qw(    DSA_ELGAMAL DSA ELGAMAL_ENCRYPT
-                    ELGAMAL
-                    ) ],
+            algo   => [ qw( RSA_RSA DSA_ELGAMAL DSA RSA ) ],
             trust  => [ qw(    TRUST_UNDEFINED    TRUST_NEVER
                     TRUST_MARGINAL    TRUST_FULLY
                     TRUST_ULTIMATE ) ],
@@ -50,10 +48,10 @@ BEGIN {
     $VERSION = '0.18';
 }
 
-use constant DSA_ELGAMAL    => 1;
-use constant DSA        => 2;
-use constant ELGAMAL_ENCRYPT    => 3;
-use constant ELGAMAL        => 4;
+use constant RSA_RSA            => 1;
+use constant DSA_ELGAMAL        => 2;
+use constant DSA                => 3;
+use constant RSA                => 4;
 
 use constant TRUST_UNDEFINED    => -1;
 use constant TRUST_NEVER    => 0;
@@ -102,8 +100,8 @@ sub cmdline($) {
     # Default options
     push @$args, "--no-tty" unless $self->{trace};
     push @$args, "--no-greeting", "--yes", "--status-fd", fileno $self->{status_fd},
-         "--run-as-shm-coprocess", "0";
-
+          "--command-fd", fileno $self->{command_fd};
+                  
     # Check for homedir and options file
     push @$args, "--homedir", $self->{homedir} if $self->{homedir};
     push @$args, "--options", $self->{options} if $self->{options};
@@ -129,12 +127,19 @@ sub end_gnupg($) {
     close $self->{status_fd}
       or croak "error while closing pipe: $!\n";
 
+    print STDERR "GnuPG: closing command fd " . fileno ($self->{command_fd})
+      . "\n"
+    if $self->{trace};
+
+    close $self->{command_fd}
+      or croak "error while closing pipe: $!\n";
+
     waitpid $self->{gnupg_pid}, 0
       or croak "error while waiting for gpg: $!\n";
 
-    for ( qw(protocol gnupg_pid shmid shm_size shm_lock_size
-         command options args status_fd input output
-         next_status ) )
+
+    for ( qw(protocol gnupg_pid command options args status_fd command_fd 
+             input output next_status ) )
     {
     delete $self->{$_};
     }
@@ -184,7 +189,7 @@ sub read_from_status($) {
 
     my ( $cmd,$arg ) = $line =~ /\[GNUPG:\] (\w+) ?(.+)?$/;
     $self->abort_gnupg( "error communicating with gnupg: bad status line: $line\n" ) unless $cmd;
-    print STDERR "Read in " . $cmd . " - " . $arg if $self->{trace};
+    print STDERR "GnuPG: Parsed as " . $cmd . " - " . $arg . "\n" if $self->{trace};
     return wantarray ? ( $cmd, $arg ) : $cmd;
 }
 
@@ -194,15 +199,27 @@ sub run_gnupg($) {
     my $fd  = gensym;
     my $wfd = gensym;
 
+    my $crfd = gensym;  # command read and write file descriptors
+    my $cwfd = gensym;
+
     pipe $fd, $wfd
-      or croak ( "error creating pipe: $!\n" );
+      or croak ( "error creating status pipe: $!\n" );
     my $old = select $wfd; $| = 1;  # Unbuffer
+    select $old;
+
+    pipe $crfd, $cwfd
+      or croak ( "error creating command pipe: $!\n" );
+    $old = select $cwfd; $| = 1;  # Unbuffer
     select $old;
 
     # Keep pipe open after close
     fcntl( $fd, F_SETFD, 0 )
     or croak "error removing close on exec flag: $!\n" ;
     fcntl( $wfd, F_SETFD, 0 )
+    or croak "error removing close on exec flag: $!\n" ;
+    fcntl( $crfd, F_SETFD, 0 )
+    or croak "error removing close on exec flag: $!\n" ;
+    fcntl( $cwfd, F_SETFD, 0 )
     or croak "error removing close on exec flag: $!\n" ;
 
     my $pid = fork;
@@ -211,27 +228,14 @@ sub run_gnupg($) {
     # Parent
     close $wfd;
 
-    $self->{status_fd} = $fd;
-    $self->{gnupg_pid} = $pid;
+    $self->{status_fd}  = $fd;
+    $self->{gnupg_pid}  = $pid;
+    $self->{command_fd} = $cwfd;
 
-    my ($cmd, $arg ) = $self->read_from_status;
-
-    $self->abort_gnupg( "wrong response from gnupg (expected SHM_INFO): $cmd\n")
-      unless ( $cmd eq "SHM_INFO" );
-
-    my ( $proto, $gpid, $shmid, $sz, $lz ) =
-      $arg =~ /pv=(\d+) pid=(\d+) shmid=(\d+) sz=(\d+) lz=(\d+)/;
-
-    $self->abort_gnupg( "unsupported protocol version: $proto\n" )
-      unless $proto == 1;
-
-    $self->{protocol}        = $proto;
-    $self->{shmid}            = $shmid;
-    $self->{shm_size}        = $sz;
-    $self->{shm_lock_size}  = $lz;
     } else {
     # Child
-    $self->{status_fd} = $wfd;
+    $self->{status_fd}  = $wfd;
+    $self->{command_fd} = $crfd;
 
     my $cmdline = $self->cmdline;
     unless ( $self->{trace} ) {
@@ -273,10 +277,11 @@ sub run_gnupg($) {
     my $max_fd = POSIX::sysconf( &POSIX::_SC_OPEN_MAX ) || 256;
     foreach my $f ( 3 .. $max_fd ) {
         next if $f == fileno $self->{status_fd};
+        next if $f == fileno $self->{command_fd};
         POSIX::close( $f );
     }
 
-    print STDERR "GnuPG: executing `" . @{$cmdline} . "`" if 1 ||$self->{trace};
+    print STDERR "GnuPG: executing `" . join(" ", @{$cmdline}) . "`" . "\n" if 1 ||$self->{trace};
 
     exec ( @$cmdline )
       or CORE::die "can't exec gnupg: $!\n";
@@ -287,12 +292,14 @@ sub cpr_maybe_send($$$) {
     ($_[0])->cpr_send( @_[1, $#_], 1);
 }
 
+
 sub cpr_send($$$;$) {
     my ($self,$key,$value, $optional) = @_;
+    my $fd = $self->{command_fd};
 
     my ( $cmd, $arg ) = $self->read_from_status;
-    unless ( defined $cmd && $cmd =~ /^SHM_GET/) {
-    $self->abort_gnupg( "protocol error: expected SHM_GET_XXX got $cmd\n" )
+    unless ( defined $cmd && $cmd =~ /^GET_/) {
+    $self->abort_gnupg( "protocol error: expected GET_XXX got $cmd\n" )
       unless $optional;
     $self->next_status( $cmd, $arg );
     return;
@@ -304,32 +311,16 @@ sub cpr_send($$$;$) {
     return;
     }
 
-    my $shmid        = $self->{shmid};
-    my $shm_size    = $self->{shm_size};
+    print STDERR "GnuPG: writing to command fd " . fileno ($fd) . ": $value\n" if $self->{trace};
 
-    my $offset = 0;
-    shmread $shmid,$offset,0,2
-      or $self->abort_gnupg( "shared memory error: $!\n" );
+    print $fd $value . "\n";
 
-    $offset = unpack "n", $offset;
-    $self->abort_gnupg( "Too long parameter for shared memory\n" )
-      if ( ( $shm_size - $offset ) < length $value );
-
-    if ( $cmd eq "SHM_GET_BOOL" ) {
-    my $truth = $value ? 1 : 0;
-    shmwrite $shmid, pack( "nC", 1, $truth ), $offset, 3
-      or $self->abort_gnupg( "shared memory error: $!\n" );
-    } else {
-    my $len = length $value;
-    shmwrite $shmid, pack( "na*", $len, $value ), $offset, $len + 2
-      or $self->abort_gnupg( "shared memory error: $!\n" );
-    }
-
-    # Set data ready flag
-    shmwrite $shmid, "\001", 3, 1
-      or $self->abort_gnupg( "shared memory error: $!\n" );
-    kill USR1 => $self->{gnupg_pid};
+    ( $cmd, $arg ) = $self->read_from_status;
+    unless ( defined $cmd && $cmd =~ /^GOT_IT/) {
+      $self->next_status( $cmd, $arg );
+      }
 }
+
 
 sub send_passphrase($$) {
     my ($self,$passwd) = @_;
@@ -394,9 +385,11 @@ sub DESTROY {
 
 sub gen_key($%) {
     my ($self,%args) = @_;
+    my $cmd;
+    my $arg;
 
     my $algo      = $args{algo};
-    $algo ||= DSA_ELGAMAL;
+    $algo ||= RSA_RSA;
 
     my $size      = $args{size};
     $size ||= 1024;
@@ -442,11 +435,12 @@ sub gen_key($%) {
     $self->run_gnupg;
 
     $self->cpr_send("keygen.algo", $algo );
-    if ( $algo == ELGAMAL ) {
-        # Shitty interactive program, yes I'm sure.
-        # I'm a program, I can't change my mind now.
-        $self->cpr_send( "keygen.algo.elg_se", 1 )
-    }
+#    if ( $algo == ELGAMAL ) {
+#        # Shitty interactive program, yes I'm sure.
+#        # I'm a program, I can't change my mind now.
+#        $self->cpr_send( "keygen.algo.elg_se", 1 )
+#    }
+
     $self->cpr_send( "keygen.size",        $size );
     $self->cpr_send( "keygen.valid",    $expire );
     $self->cpr_send( "keygen.name",        $name );
@@ -575,7 +569,7 @@ sub encrypt($%) {
 
     # It is possible that this key has no assigned trust value.
     # Assume the caller knows what he is doing.
-    $self->cpr_maybe_send( "untrusted_key.override", 1 );
+    $self->cpr_maybe_send( "untrusted_key.override", 'y' );
 
     $self->end_gnupg unless $args{tie_mode};
 }
@@ -759,6 +753,7 @@ sub decrypt_postwrite($%) {
     } else {
         # gnupg 1.0.2 adds this status message
         ( $cmd, $arg ) = $self->read_from_status() if $cmd =~ /BEGIN_DECRYPTION/;
+        ( $cmd, $arg ) = $self->read_from_status() if $cmd =~ /DECRYPTION_INFO/;
 
         $self->abort_gnupg( "invalid passphrase - $cmd" ) unless $cmd =~ /PLAINTEXT/;
     }
