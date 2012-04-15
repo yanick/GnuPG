@@ -1,7 +1,3 @@
-Makefile
-blib
-pm_to_blib
-gnupg
 test/file-tie.txt.asc
 test/file.txt.asc
 test/file.txt.cipher
@@ -19,6 +15,6 @@ test/pubring.gpg~
 test/random_seed
 test/secring.gpg
 test/trustdb.gpg
-MYMETA.json
 MYMETA.yml
-GnuPG-*
+MYMETA.json
+GnuPG-.*
