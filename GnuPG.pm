@@ -801,7 +801,7 @@ __END__
 
 =head1 NAME
 
-GnuPG - Perl module interface to the GNU Privacy Guard.
+GnuPG - Perl module interface to the GNU Privacy Guard (v1.x.x series)
 
 =head1 SYNOPSIS
 
@@ -898,9 +898,10 @@ entropy from the computer. Here are the parameters it accepts :
 
 =item algo
 
-This is the algorithm use to create the key. Can be ELGAMAL,
-DSA_ELGAMAL or DSA. It defaults to DSA_ELGAMAL. To import
-those constant in your name space, use the :algo tag.
+This is the algorithm use to create the key. Can be I<DSA_ELGAMAL>,
+I<DSA>, I<RSA_RSA> or I<RSA>.
+It defaults to I<DSA_ELGAMAL>. To import
+those constant in your name space, use the I<:algo> tag.
 
 =item size
 
@@ -1212,6 +1213,10 @@ message.
     Example: $gpg->decrypt( ciphertext => "file.gpg", output => "file.txt"
                 passphrase => $secret );
 
+=head1 BUGS AND LIMITATIONS
+
+This module doesn't work (yet) with the v2 branch of GnuPG.
+
 =head1 AUTHOR
 
 Francis J. Lacoste <francis.lacoste@Contre.COM>
@@ -1228,6 +1233,10 @@ the Free Software Foundation; either version 2 of the License, or
 
 =head1 SEE ALSO
 
-gpg(1) GnuPG::Tie(3)
+L<GnuPG::Tie>
+
+Alternative module: L<GnuPG::Interface>
+
+gpg(1) 
 
 =cut
