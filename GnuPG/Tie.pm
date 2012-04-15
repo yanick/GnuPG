@@ -364,7 +364,7 @@ With GnuPG::Tie::Decrypt you may read the plaintext equivalent of a
 ciphertext. This is one can have been written to file handle.
 
 All options given to the tie constructor will be passed on to the underlying
-GnuPG object. You can use a mix of options to ouput directly to a file or
+GnuPG object. You can use a mix of options to output directly to a file or
 to read directly from a file, only remember than once you start reading
 from the file handle you can't write to it anymore.
 
