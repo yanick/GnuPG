@@ -1,6 +1,6 @@
 Summary: Perl interface to the Gnu Privacy Guard
 Name: GnuPG
-Version: 0.18
+Version: 0.19
 Release: 1c
 Source: http://www.cpan.org/modules/by-module/GnuPG/%{name}-%{version}.tar.gz
 Copyright: GPL
@@ -41,6 +41,13 @@ rm -fr $RPM_BUILD_ROOT
 %doc README ChangeLog NEWS
 
 %changelog
+* Sun Apr 15 2012 Yanick Champoux <yanick@cpan.org>
+  [0.19-1c]
+- POD typo fix. (patch by Salvatore Bonaccorso) [RT72600]
+- Don't use deprecated shared memory mode (patch by Adam Benjamin)
+- Log format. (pointed out by Adam Benjamin)
+- command output parsing for newer gnupg (patch by Adam Benjamin)
+
 * Mon Nov 21 2011 Yanick Champoux <yanick@cpan.org>
   [0.18-1c]
 - encrypt() now accept many recipients. [RT71127]

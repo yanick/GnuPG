@@ -45,7 +45,7 @@ BEGIN {
 
     Exporter::export_ok_tags( qw( algo trust ) );
 
-    $VERSION = '0.18';
+    $VERSION = '0.19';
 }
 
 use constant RSA_RSA            => 1;

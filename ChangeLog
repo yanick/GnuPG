@@ -1,4 +1,5 @@
-XXX
+2012-04-15 version 0.19
+
 	* POD typo fix. (patch by Salvatore Bonaccorso) [RT72600]
 	* Don't use deprecated shared memory mode (patch by Adam Benjamin)
 	* Log format. (pointed out by Adam Benjamin)
